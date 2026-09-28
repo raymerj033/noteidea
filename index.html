@@ -191,14 +191,14 @@
 
   .top-right-btns{ position:absolute; top:18px; right:18px; z-index:55; display:flex; gap:8px; }
 
-  .zoom-wrap{ left:18px; bottom:calc(26px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .zoom-wrap{ left:18px; bottom:calc(44px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; align-items:center; gap:8px; }
   .zoom-wrap[hidden]{ display:none; }
   .zoom-slider-pop{ background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:12px 8px; box-shadow:0 8px 22px -10px rgba(20,18,14,0.3); display:flex; flex-direction:column; align-items:center; gap:6px; }
   .zoom-slider-pop[hidden]{ display:none; }
   .zoom-slider-pop input[type=range]{ writing-mode:vertical-lr; direction:rtl; width:22px; height:200px; }
   .zoom-pct{ font-size:11px; color:var(--ink-soft); font-weight:500; }
 
-  .scenes-wrap{ left:64px; bottom:calc(26px + env(safe-area-inset-bottom,0px)); }
+  .scenes-wrap{ left:66px; bottom:calc(44px + env(safe-area-inset-bottom,0px)); }
   .scenes-wrap[hidden]{ display:none; }
   .scenes-panel{ position:absolute; bottom:46px; left:0; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:6px; min-width:190px; max-height:50vh; overflow-y:auto; box-shadow:0 16px 34px -14px rgba(20,18,14,0.35); display:flex; flex-direction:column; gap:2px; }
   .scenes-panel[hidden]{ display:none; }
@@ -230,8 +230,15 @@
   .selection-bar[hidden]{ display:none; }
   .selection-bar .sel-count{ font-size:13px; font-weight:500; white-space:nowrap; }
   .selection-bar button{ border:none; border-radius:999px; padding:8px 14px; font-size:13px; font-weight:500; }
-  .selection-bar .sel-group{ background:rgba(255,255,255,0.16); color:inherit; }
-  .selection-bar .sel-group:hover{ background:rgba(255,255,255,0.26); }
+  .selection-bar .sel-btn{ display:flex; align-items:center; gap:6px; background:rgba(127,127,127,0.28); color:inherit; }
+  .selection-bar .sel-btn:hover{ background:rgba(127,127,127,0.42); }
+  .sel-folder-wrap{ position:relative; }
+  .sel-folder-pop{ position:absolute; bottom:48px; left:0; background:var(--surface); color:var(--ink); border:1px solid var(--border); border-radius:14px; padding:6px; min-width:180px; max-height:40vh; overflow-y:auto; box-shadow:0 16px 34px -14px rgba(20,18,14,0.35); display:flex; flex-direction:column; gap:2px; }
+  .sel-folder-pop[hidden]{ display:none; }
+  .selection-bar .sel-folder-pop button{ background:none; color:var(--ink); text-align:left; padding:9px 10px; border-radius:9px; font-size:13.5px; font-weight:400; }
+  .selection-bar .sel-folder-pop button:hover{ background:var(--border); }
+  .sel-folder-pop .sel-empty{ padding:9px 10px; font-size:12.5px; color:var(--ink-faint); }
+  body.selecting .fab-cluster, body.selecting .zoom-wrap, body.selecting .scenes-wrap{ display:none; }
   .selection-bar .sel-done{ background:none; color:inherit; opacity:0.75; width:34px; height:34px; padding:0; display:flex; align-items:center; justify-content:center; }
 
   /* ---------------- FULLSCREEN EDITOR ---------------- */
@@ -339,6 +346,7 @@
   .folder-pick-popover{ position:fixed !important; }
   .toast{ position:fixed; left:50%; bottom:calc(90px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:500; background:var(--danger); color:#fff; font-size:13px; padding:10px 16px; border-radius:12px; box-shadow:0 10px 24px -8px rgba(0,0,0,0.4); max-width:88vw; text-align:center; }
   .toast[hidden]{ display:none; }
+  .toast.ok{ background:var(--accent); color:var(--on-accent); }
   .status-bar{ display:none; }
 
   /* ---------------- FULL PHOTO VIEWER ---------------- */
@@ -431,7 +439,17 @@
   <!-- SELECTION BAR -->
   <div class="selection-bar" id="selectionBar" hidden>
     <span class="sel-count" id="selCount">1 selected</span>
-    <button class="sel-group" id="selGroupBtn">Group</button>
+    <div class="sel-folder-wrap">
+      <button class="sel-btn" id="selFolderBtn" title="Move to folder">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+        Folder
+      </button>
+      <div class="sel-folder-pop" id="selFolderPop" hidden></div>
+    </div>
+    <button class="sel-btn" id="selDeleteBtn" title="Delete selected">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      Delete
+    </button>
     <button class="sel-done" id="selDoneBtn" title="Done">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
@@ -461,6 +479,10 @@
         <button data-action="new-link" id="newLinkMenuBtn">
           <span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1.5-1.5"/></svg></span>
           Link
+        </button>
+        <button data-action="paste" id="pasteMenuBtn">
+          <span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h2"/></svg></span>
+          Paste
         </button>
         <div class="fm-sep"></div>
         <button data-action="new-folder" id="newFolderMenuBtn">
@@ -628,6 +650,7 @@
   var saveTimer = null;
   var pendingDeleteNoteId = null;
   var pendingDeleteFolderId = null;
+  var pendingDeleteNoteIds = null;
   var boardMode = 'free';
   var boardZoom = 1;
   var selectionMode = false;
@@ -713,9 +736,10 @@
 
   var stateLoaded = false, writing = false, writePending = false, notesFromLegacy = false, toastTimer = null;
 
-  function showToast(msg){
+  function showToast(msg, ok){
     var t = document.getElementById('toast');
     if(!t) return;
+    t.classList.toggle('ok', !!ok);
     t.textContent = msg; t.hidden = false;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function(){ t.hidden = true; }, 4500);
@@ -869,6 +893,27 @@
   var board = document.getElementById('board');
   var emptyCanvas = document.getElementById('emptyCanvas');
   var initialScrollDone = false;
+  var STORAGE_VIEW = 'notepad_view_v1';
+  var freeView = null, masonryTop = 0, lastRenderedMode = null, viewTimer = null;
+  try{ freeView = JSON.parse(localStorage.getItem(STORAGE_VIEW) || 'null'); }catch(e){ freeView = null; }
+  function restoreFreeView(){
+    var v = freeView ? {left:freeView.left, top:freeView.top, zoom:freeView.zoom} : null;
+    if(v && typeof v.zoom === 'number'){
+      boardZoom = clamp(v.zoom, 0.4, 2.2);
+      zoomSlider.value = Math.round(boardZoom*100);
+      document.getElementById('zoomPct').textContent = Math.round(boardZoom*100) + '%';
+    }
+    applyZoom();
+    if(v && typeof v.left === 'number'){ board.scrollLeft = v.left; board.scrollTop = v.top; }
+    else centerBoardScroll();
+  }
+  board.addEventListener('scroll', function(){
+    if(boardMode === 'free'){
+      freeView = {left:board.scrollLeft, top:board.scrollTop, zoom:boardZoom};
+      clearTimeout(viewTimer);
+      viewTimer = setTimeout(function(){ try{ localStorage.setItem(STORAGE_VIEW, JSON.stringify(freeView)); }catch(e){} }, 300);
+    } else { masonryTop = board.scrollTop; }
+  });
 
   function centerBoardScroll(){
     board.scrollLeft = BOARD_OFFSET - board.clientWidth/2;
@@ -1005,9 +1050,10 @@
     applyZoom();
     emptyCanvas.hidden = notes.length !== 0;
 
-    if(!initialScrollDone && boardMode === 'free'){
-      initialScrollDone = true;
-      requestAnimationFrame(centerBoardScroll);
+    if(lastRenderedMode !== boardMode){
+      lastRenderedMode = boardMode;
+      if(boardMode === 'free') restoreFreeView();
+      else { board.scrollLeft = 0; board.scrollTop = masonryTop; }
     }
   }
 
@@ -1135,38 +1181,66 @@
   }
 
   function attachDrag(cardEl, note){
-    var startX, startY, origX, origY, moved=false, isDraggable=false, longPressTimer=null, longPressFired=false;
+    var startX, startY, origX, origY, moved=false, isDraggable=false, groupDrag=false, group=null, longPressTimer=null, longPressFired=false, tracking=false;
+    function place(n, el){ el.style.transform = 'translate('+(n.x+BOARD_OFFSET)+'px,'+(n.y+BOARD_OFFSET)+'px) rotate('+n.rot+'deg)'; }
     cardEl.addEventListener('pointerdown', function(e){
       if(e.button !== undefined && e.button !== 0) return;
       cardEl.setPointerCapture(e.pointerId);
+      tracking = true;
       startX = e.clientX; startY = e.clientY; origX = note.x; origY = note.y; moved = false; longPressFired = false;
-      isDraggable = !selectionMode && !note.locked;
-      if(isDraggable){ bringToFront(note); cardEl.style.zIndex = note.z; cardEl.classList.add('dragging'); }
-      if(!selectionMode){
-        longPressTimer = setTimeout(function(){
-          longPressFired = true;
-          if(isDraggable){ isDraggable = false; cardEl.classList.remove('dragging'); }
-          enterSelectionMode(note.id);
-        }, 480);
+      groupDrag = false; group = null; isDraggable = false;
+      if(selectionMode){
+        if(selectedIds[note.id]){
+          group = [];
+          Object.keys(selectedIds).forEach(function(id){
+            var m = getNote(id);
+            if(!m || m.locked) return;
+            var el = boardInner.querySelector('.card[data-note-id="'+id+'"]');
+            if(el) group.push({n:m, el:el, x:m.x, y:m.y});
+          });
+          groupDrag = group.length > 0;
+        }
+      } else {
+        isDraggable = !note.locked;
+        if(isDraggable){ bringToFront(note); cardEl.style.zIndex = note.z; cardEl.classList.add('dragging'); }
+        if(e.pointerType !== 'mouse'){
+          longPressTimer = setTimeout(function(){
+            longPressFired = true;
+            if(isDraggable){ isDraggable = false; cardEl.classList.remove('dragging'); }
+            enterSelectionMode(note.id);
+          }, 480);
+        }
       }
     });
     cardEl.addEventListener('pointermove', function(e){
+      if(!tracking) return;
       var dx = e.clientX - startX, dy = e.clientY - startY;
       if(!moved && (Math.abs(dx) > 6 || Math.abs(dy) > 6)){
         moved = true;
         clearTimeout(longPressTimer);
       }
-      if(isDraggable && moved){
-        note.x = origX + dx;
-        note.y = origY + dy;
-        cardEl.style.transform = 'translate('+(note.x+BOARD_OFFSET)+'px,'+(note.y+BOARD_OFFSET)+'px) rotate('+note.rot+'deg)';
+      if(!moved) return;
+      var z = boardZoom || 1;
+      if(isDraggable){
+        note.x = origX + dx / z;
+        note.y = origY + dy / z;
+        place(note, cardEl);
+      } else if(groupDrag){
+        group.forEach(function(g){
+          g.n.x = g.x + dx / z;
+          g.n.y = g.y + dy / z;
+          place(g.n, g.el);
+        });
       }
     });
     function end(){
       clearTimeout(longPressTimer);
+      if(!tracking) return;
+      tracking = false;
       if(isDraggable) cardEl.classList.remove('dragging');
       if(selectionMode){
-        if(!longPressFired && !moved) toggleSelect(note.id);
+        if(groupDrag && moved){ persistNotes(); }
+        else if(!longPressFired && !moved) toggleSelect(note.id);
       } else if(isDraggable && moved){
         persistNotes();
         if(activeCardId !== note.id){ activeCardId = note.id; renderBoard(); }
@@ -1174,10 +1248,10 @@
         activeCardId = note.id;
         openEditor(note.id);
       }
-      longPressFired = false; moved = false; isDraggable = false;
+      longPressFired = false; moved = false; isDraggable = false; groupDrag = false; group = null;
     }
     cardEl.addEventListener('pointerup', end);
-    cardEl.addEventListener('pointercancel', function(){ clearTimeout(longPressTimer); cardEl.classList.remove('dragging'); isDraggable=false; });
+    cardEl.addEventListener('pointercancel', function(){ clearTimeout(longPressTimer); cardEl.classList.remove('dragging'); isDraggable=false; groupDrag=false; tracking=false; });
   }
 
   function attachResize(handleEl, cardEl, note){
@@ -1338,24 +1412,27 @@
   // ---------- MARQUEE SELECT (mouse drag / long-press+drag on touch) ----------
   var marqueeBox = document.getElementById('marqueeBox');
   (function(){
-    var startX=null, startY=null, active=false, touchHoldTimer=null, pendingTouch=false;
+    var startX=null, startY=null, startCX=0, startCY=0, active=false, touchHoldTimer=null, pendingTouch=false;
     function beginMarquee(clientX, clientY){
       active = true;
+      startCX = clientX; startCY = clientY;
       var rect = board.getBoundingClientRect();
-      startX = clientX - rect.left + board.scrollLeft;
-      startY = clientY - rect.top + board.scrollTop;
+      var zz = boardZoom || 1;
+      startX = (clientX - rect.left + board.scrollLeft) / zz;
+      startY = (clientY - rect.top + board.scrollTop) / zz;
       if(!selectionMode){ selectionMode = true; selectedIds = {}; }
       marqueeBox.hidden = false;
       updateMarquee(clientX, clientY);
     }
     function updateMarquee(clientX, clientY){
       var rect = board.getBoundingClientRect();
-      var curX = clientX - rect.left + board.scrollLeft;
-      var curY = clientY - rect.top + board.scrollTop;
+      var zz = boardZoom || 1;
+      var curX = (clientX - rect.left + board.scrollLeft) / zz;
+      var curY = (clientY - rect.top + board.scrollTop) / zz;
       var x = Math.min(startX,curX), y = Math.min(startY,curY);
       var w = Math.abs(curX-startX), h = Math.abs(curY-startY);
-      marqueeBox.style.left = x+'px'; marqueeBox.style.top = y+'px';
-      marqueeBox.style.width = w+'px'; marqueeBox.style.height = h+'px';
+      marqueeBox.style.left = Math.min(startCX, clientX)+'px'; marqueeBox.style.top = Math.min(startCY, clientY)+'px';
+      marqueeBox.style.width = Math.abs(clientX-startCX)+'px'; marqueeBox.style.height = Math.abs(clientY-startCY)+'px';
       var boxLogical = { x1:x-BOARD_OFFSET, y1:y-BOARD_OFFSET, x2:x+w-BOARD_OFFSET, y2:y+h-BOARD_OFFSET };
       selectedIds = {};
       notes.forEach(function(n){
@@ -1404,7 +1481,6 @@
   // ---------- SELECTION MODE ----------
   var selectionBar = document.getElementById('selectionBar');
   var selCount = document.getElementById('selCount');
-  var selGroupBtn = document.getElementById('selGroupBtn');
 
   function enterSelectionMode(id){
     selectionMode = true;
@@ -1420,46 +1496,59 @@
     selectionMode = false; selectedIds = {};
     renderBoard(); renderSelectionBar();
   }
+  var selFolderBtn = document.getElementById('selFolderBtn');
+  var selFolderPop = document.getElementById('selFolderPop');
+  var selDeleteBtn = document.getElementById('selDeleteBtn');
+  var selFolderOpen = false;
+  function setSelFolderOpen(v){
+    selFolderOpen = v;
+    selFolderPop.hidden = !v;
+    if(v) renderSelFolderPop();
+  }
+  function renderSelFolderPop(){
+    var html = '<button data-move="">No folder</button>';
+    folders.forEach(function(f){ html += '<button data-move="'+f.id+'">'+escapeHtml(f.name)+'</button>'; });
+    if(!folders.length) html += '<div class="sel-empty">Create folders from the + menu</div>';
+    selFolderPop.innerHTML = html;
+  }
   function renderSelectionBar(){
     var ids = Object.keys(selectedIds);
     selectionBar.hidden = !selectionMode;
-    if(!selectionMode) return;
+    document.body.classList.toggle('selecting', selectionMode);
+    if(!selectionMode){ setSelFolderOpen(false); return; }
     selCount.textContent = ids.length + ' selected';
-    var allGrouped = ids.length > 0 && ids.every(function(id){ var n=getNote(id); return n && n.grouped; });
-    selGroupBtn.textContent = allGrouped ? 'Ungroup' : 'Group';
-    selGroupBtn.disabled = ids.length === 0;
-    selGroupBtn.style.opacity = ids.length === 0 ? '0.5' : '1';
+    [selFolderBtn, selDeleteBtn].forEach(function(btn){
+      btn.disabled = ids.length === 0;
+      btn.style.opacity = ids.length === 0 ? '0.5' : '1';
+    });
   }
-  function performGroupToggle(){
+  selFolderBtn.addEventListener('click', function(){ if(Object.keys(selectedIds).length) setSelFolderOpen(!selFolderOpen); });
+  selFolderPop.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-move]');
+    if(!btn) return;
+    var fid = btn.getAttribute('data-move') || null;
     var ids = Object.keys(selectedIds);
-    if(ids.length === 0) return;
-    var allGrouped = ids.every(function(id){ var n=getNote(id); return n && n.grouped; });
-    if(allGrouped){
-      ids.forEach(function(id){
-        var n = getNote(id);
-        if(n && n.grouped){ n.x = n._px; n.y = n._py; n.grouped = false; delete n._px; delete n._py; }
-      });
-    } else {
-      var cols = Math.max(1, Math.ceil(Math.sqrt(ids.length)));
-      var cellW = 200, cellH = 180;
-      var logicalCX = board.scrollLeft - BOARD_OFFSET + board.clientWidth/2;
-      var logicalCY = board.scrollTop - BOARD_OFFSET + board.clientHeight/2;
-      var startX = logicalCX - (cols*cellW)/2;
-      var startY = logicalCY - 160;
-      ids.forEach(function(id, i){
-        var n = getNote(id); if(!n) return;
-        if(!n.grouped){ n._px = n.x; n._py = n.y; }
-        n.grouped = true;
-        n.x = startX + (i % cols) * cellW;
-        n.y = startY + Math.floor(i / cols) * cellH;
-        n.z = ++zTop;
-      });
-    }
+    ids.forEach(function(id){ var n = getNote(id); if(n){ n.folderId = fid; n.updatedAt = Date.now(); } });
     persistNotes();
-    renderBoard();
-    renderSelectionBar();
-  }
-  selGroupBtn.addEventListener('click', performGroupToggle);
+    var f = fid ? getFolder(fid) : null;
+    showToast('Moved ' + ids.length + (ids.length === 1 ? ' item' : ' items') + ' to ' + (f ? f.name : 'no folder'), true);
+    setSelFolderOpen(false);
+    exitSelectionMode();
+  });
+  document.addEventListener('pointerdown', function(e){
+    if(!selFolderOpen) return;
+    if(selFolderPop.contains(e.target) || selFolderBtn.contains(e.target)) return;
+    setSelFolderOpen(false);
+  });
+  selDeleteBtn.addEventListener('click', function(){
+    var ids = Object.keys(selectedIds);
+    if(!ids.length) return;
+    pendingDeleteNoteIds = ids; pendingDeleteNoteId = null; pendingDeleteFolderId = null;
+    document.getElementById('modalTitle').textContent = 'Delete ' + ids.length + (ids.length === 1 ? ' item' : ' items');
+    document.getElementById('modalMessage').textContent = "This can't be undone. They will be permanently deleted.";
+    document.getElementById('modalConfirm').textContent = 'Delete';
+    showModal();
+  });
   document.getElementById('selDoneBtn').addEventListener('click', exitSelectionMode);
 
   // ---------- FOLDERS DROPDOWN ----------
@@ -1521,7 +1610,7 @@
     fabMenuOpen = open;
     fabMenu.hidden = !open;
     fabBtn.classList.toggle('open', open);
-    if(!open){ resetFolderMenuButton(); resetLinkMenuButton(); }
+    if(!open){ resetFolderMenuButton(); resetLinkMenuButton(); resetPasteMenuButton(); }
   }
   function resetFolderMenuButton(){
     newFolderMenuBtn.innerHTML = '<span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg></span> New folder';
@@ -1529,9 +1618,69 @@
   function resetLinkMenuButton(){
     newLinkMenuBtn.innerHTML = '<span class="fm-icon">'+linkIconSmall+'</span> Link';
   }
+  var pasteMenuBtn = document.getElementById('pasteMenuBtn');
+  var clipboardIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h2"/></svg>';
+  function resetPasteMenuButton(){ pasteMenuBtn.innerHTML = '<span class="fm-icon">'+clipboardIcon+'</span> Paste'; }
+
+  function addItemAndOpen(note){
+    notes.unshift(note);
+    persistNotes();
+    renderAll();
+    openEditor(note.id);
+  }
+  function createFromText(text){
+    text = (text || '').trim();
+    if(!text) return false;
+    if(/^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(text)){
+      createLinkItem(/^https?:\/\//i.test(text) ? text : 'https://' + text);
+    } else {
+      var q = baseNewItem('quick');
+      q.body = text;
+      addItemAndOpen(q);
+    }
+    return true;
+  }
+  function pasteFallback(){
+    setFabMenu(true);
+    pasteMenuBtn.innerHTML = '<input type="text" class="new-folder-input" id="pasteFallbackInput" placeholder="Press & hold, then Paste">';
+    var input = document.getElementById('pasteFallbackInput');
+    input.focus();
+    input.addEventListener('keydown', function(ev){ ev.stopPropagation(); if(ev.key === 'Escape') setFabMenu(false); });
+    input.addEventListener('paste', function(ev){
+      var cd = ev.clipboardData;
+      var hasImage = cd && Array.prototype.some.call(cd.items || [], function(it){ return it.type && it.type.indexOf('image') === 0; });
+      if(hasImage){ setFabMenu(false); return; }
+      ev.preventDefault();
+      var t = cd ? cd.getData('text') : '';
+      setFabMenu(false);
+      if(!createFromText(t)) showToast('Nothing to paste');
+    });
+  }
+  function pasteFromClipboard(){
+    if(navigator.clipboard && navigator.clipboard.read){
+      navigator.clipboard.read().then(function(items){
+        var imgItem = null, imgType = null, txtItem = null;
+        items.forEach(function(it){
+          it.types.forEach(function(t){
+            if(!imgItem && t.indexOf('image/') === 0){ imgItem = it; imgType = t; }
+            if(!txtItem && t === 'text/plain') txtItem = it;
+          });
+        });
+        if(imgItem){
+          imgItem.getType(imgType).then(function(blob){ readImageSmart(blob, function(d){ createPhotoFromDataUrl(d); }); });
+        } else if(txtItem){
+          txtItem.getType('text/plain').then(function(b){ return b.text(); }).then(function(t){ if(!createFromText(t)) showToast('Nothing to paste'); });
+        } else { showToast('Nothing to paste'); }
+      }).catch(pasteFallback);
+    } else if(navigator.clipboard && navigator.clipboard.readText){
+      navigator.clipboard.readText().then(function(t){ if(!createFromText(t)) showToast('Nothing to paste'); }).catch(pasteFallback);
+    } else { pasteFallback(); }
+  }
+
   fabBtn.addEventListener('click', function(){ setFabMenu(!fabMenuOpen); });
 
   fabMenu.addEventListener('click', function(e){
+    if(e.target.tagName === 'INPUT') return;
     var btn = e.target.closest('button[data-action]');
     if(!btn) return;
     var action = btn.getAttribute('data-action');
@@ -1539,6 +1688,7 @@
     else if(action === 'new-quick'){ setFabMenu(false); createItem('quick'); }
     else if(action === 'new-photo'){ setFabMenu(false); triggerPhotoCreate(); }
     else if(action === 'new-audio'){ setFabMenu(false); createItem('audio'); }
+    else if(action === 'paste'){ setFabMenu(false); pasteFromClipboard(); }
     else if(action === 'new-link'){
       newLinkMenuBtn.innerHTML = '<input type="text" class="new-folder-input" id="fabLinkInput" placeholder="Paste a URL">';
       var input = document.getElementById('fabLinkInput');
@@ -1641,7 +1791,17 @@
     if(!items) return;
     var imageItem = null;
     for(var i=0;i<items.length;i++){ if(items[i].type && items[i].type.indexOf('image') === 0){ imageItem = items[i]; break; } }
-    if(!imageItem) return;
+    if(!imageItem){
+      if(editorPage.hidden && !fabMenuOpen){
+        var ae = document.activeElement;
+        var typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+        if(!typing){
+          var txt = (e.clipboardData || window.clipboardData).getData('text');
+          if(txt && createFromText(txt)) e.preventDefault();
+        }
+      }
+      return;
+    }
     var file = imageItem.getAsFile();
     if(!file) return;
     e.preventDefault();
@@ -2255,14 +2415,14 @@
 
   // ---------- DELETE ----------
   function askDelete(id){
-    pendingDeleteNoteId = id; pendingDeleteFolderId = null;
+    pendingDeleteNoteId = id; pendingDeleteFolderId = null; pendingDeleteNoteIds = null;
     document.getElementById('modalTitle').textContent = 'Delete';
     document.getElementById('modalMessage').textContent = "This can't be undone. It will be permanently deleted.";
     document.getElementById('modalConfirm').textContent = 'Delete';
     showModal();
   }
   function askDeleteFolder(id){
-    pendingDeleteFolderId = id; pendingDeleteNoteId = null;
+    pendingDeleteFolderId = id; pendingDeleteNoteId = null; pendingDeleteNoteIds = null;
     var f = getFolder(id);
     document.getElementById('modalTitle').textContent = 'Delete folder';
     document.getElementById('modalMessage').textContent = 'Notes in "'+(f?f.name:'this folder')+'" will move to All. This can\'t be undone.';
@@ -2270,9 +2430,15 @@
     showModal();
   }
   function showModal(){ document.getElementById('modalOverlay').classList.add('show'); }
-  function hideModal(){ document.getElementById('modalOverlay').classList.remove('show'); pendingDeleteNoteId=null; pendingDeleteFolderId=null; renderBoard(); }
+  function hideModal(){ document.getElementById('modalOverlay').classList.remove('show'); pendingDeleteNoteId=null; pendingDeleteFolderId=null; pendingDeleteNoteIds=null; renderBoard(); }
   function performDelete(){
-    if(pendingDeleteNoteId){
+    if(pendingDeleteNoteIds){
+      var gone = {}; pendingDeleteNoteIds.forEach(function(id){ gone[id] = true; });
+      notes = notes.filter(function(n){ return !gone[n.id]; });
+      persistNotes();
+      selectionMode = false; selectedIds = {}; activeCardId = null;
+      renderAll(); renderSelectionBar();
+    } else if(pendingDeleteNoteId){
       notes = notes.filter(function(n){ return n.id !== pendingDeleteNoteId; });
       persistNotes();
       if(openNoteId === pendingDeleteNoteId){ editorPage.hidden = true; openNoteId = null; }
