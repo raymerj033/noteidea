@@ -63,7 +63,7 @@
 
   /* ---------------- BOARD / CANVAS ---------------- */
   .board{
-    position:absolute; inset:0;
+    position:absolute; inset:0; z-index:0;
     overflow:auto;
     background-color:var(--canvas-bg);
     background-image:radial-gradient(var(--canvas-dot) 1.2px, transparent 1.2px);
@@ -75,10 +75,10 @@
   .board-inner.mode-masonry{
     display:flex; gap:14px; align-items:flex-start;
     width:100%; max-width:1400px; margin:0 auto;
-    padding:20px 14px 110px 14px;
+    padding:72px 14px 110px 14px;
   }
   .masonry-col{ flex:1; min-width:0; display:flex; flex-direction:column; gap:14px; }
-  @media (min-width:700px){ .board-inner.mode-masonry{ gap:18px; padding:20px 22px 110px 22px; } .masonry-col{ gap:18px; } }
+  @media (min-width:700px){ .board-inner.mode-masonry{ gap:18px; padding:72px 22px 110px 22px; } .masonry-col{ gap:18px; } }
 
   .card{
     border-radius:18px;
@@ -96,7 +96,7 @@
   }
   .card-clip{ overflow:hidden; border-radius:inherit; display:flex; flex-direction:column; flex:1; min-height:0; width:100%; height:100%; background:inherit; }
   .mode-free .card{ position:absolute; touch-action:none; cursor:grab; }
-  .mode-masonry .card{ width:100%; align-self:start; animation:card-in 0.2s ease both; }
+  .mode-masonry .card{ touch-action:pan-y; width:100%; align-self:start; animation:card-in 0.2s ease both; }
   @keyframes card-in{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
   .card:hover{ box-shadow:0 2px 4px rgba(20,18,14,0.09), 0 20px 36px -14px rgba(20,18,14,0.38); }
   .mode-masonry .card:hover{ transform:translateY(-2px); }
@@ -110,7 +110,7 @@
   .card.selected{ outline:2.5px solid var(--accent); outline-offset:2px; }
 
   .card-swipe-wrap{ position:relative; width:100%; height:100%; display:flex; flex-direction:column; flex:1; min-height:0; background:inherit; }
-  .card-delete-reveal{ position:absolute; inset:0; background:var(--danger); color:#fff; display:flex; align-items:center; justify-content:flex-end; padding-right:18px; font-size:13px; font-weight:600; border-radius:18px; z-index:0; }
+  .card-delete-reveal{ opacity:0; position:absolute; inset:0; background:var(--danger); color:#fff; display:flex; align-items:center; justify-content:flex-end; padding-right:18px; font-size:13px; font-weight:600; border-radius:18px; z-index:0; }
   .card-inner{ position:relative; background:inherit; display:flex; flex-direction:column; flex:1; min-height:0; border-radius:inherit; transition:none; z-index:1; }
 
   .card-img{ width:100%; height:92px; flex-shrink:0; background-size:cover; background-position:center; }
@@ -120,6 +120,8 @@
   .card-snippet{ font-size:12.5px; line-height:1.55; opacity:0.82; flex:1; min-height:0; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:10; -webkit-box-orient:vertical; white-space:pre-wrap; }
   .mode-masonry .card-snippet{ font-size:13.5px; line-height:1.6; -webkit-line-clamp:14; }
   .card.sized .card-snippet{ -webkit-line-clamp:5; }
+  .card-footer:has(.card-badges:empty){ display:none; }
+  .card-photo-footer:has(.card-badges:empty){ display:none; }
   .card-footer{ display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:10px; font-size:11px; opacity:0.6; flex-shrink:0; }
   .card-badges{ display:flex; align-items:center; gap:6px; }
 
@@ -335,6 +337,8 @@
   .editor-menu .fm-icon{ width:16px; height:16px; flex-shrink:0; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; }
   .editor-menu .fm-sep{ height:1px; background:var(--border); margin:4px 6px; }
   .folder-pick-popover{ position:fixed !important; }
+  .toast{ position:fixed; left:50%; bottom:calc(90px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:500; background:var(--danger); color:#fff; font-size:13px; padding:10px 16px; border-radius:12px; box-shadow:0 10px 24px -8px rgba(0,0,0,0.4); max-width:88vw; text-align:center; }
+  .toast[hidden]{ display:none; }
   .status-bar{ display:none; }
 
   /* ---------------- FULL PHOTO VIEWER ---------------- */
@@ -586,6 +590,8 @@
     <canvas id="drawCanvas"></canvas>
   </div>
 
+  <div class="toast" id="toast" hidden></div>
+
   <!-- CONFIRM MODAL -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-card">
@@ -647,8 +653,6 @@
   }
 
   function loadState(){
-    try{ notes = JSON.parse(localStorage.getItem(STORAGE_NOTES) || '[]'); }catch(e){ notes = []; }
-    migrateFromOlder();
     try{ folders = JSON.parse(localStorage.getItem(STORAGE_FOLDERS) || '[]'); }catch(e){ folders = []; }
     try{ scenes = JSON.parse(localStorage.getItem(STORAGE_SCENES) || '[]'); }catch(e){ scenes = []; }
     try{ boardMode = localStorage.getItem(STORAGE_MODE) || 'free'; }catch(e){ boardMode = 'free'; }
@@ -675,7 +679,78 @@
       }
     });
   }
-  function persistNotes(){ try{ localStorage.setItem(STORAGE_NOTES, JSON.stringify(notes)); }catch(e){} }
+  // ---- Notes live in IndexedDB (localStorage is ~5MB and silently fails once photos fill it) ----
+  var IDB = (function(){
+    var dbp = null;
+    function open(){
+      if(dbp) return dbp;
+      dbp = new Promise(function(res, rej){
+        if(!window.indexedDB){ rej(new Error('no idb')); return; }
+        var r = indexedDB.open('notepad_db', 1);
+        r.onupgradeneeded = function(){ r.result.createObjectStore('kv'); };
+        r.onsuccess = function(){ res(r.result); };
+        r.onerror = function(){ rej(r.error); };
+      });
+      return dbp;
+    }
+    function get(k){
+      return open().then(function(db){ return new Promise(function(res, rej){
+        var q = db.transaction('kv','readonly').objectStore('kv').get(k);
+        q.onsuccess = function(){ res(q.result); }; q.onerror = function(){ rej(q.error); };
+      }); });
+    }
+    function set(k, v){
+      return open().then(function(db){ return new Promise(function(res, rej){
+        var tx = db.transaction('kv','readwrite');
+        tx.objectStore('kv').put(v, k);
+        tx.oncomplete = function(){ res(); };
+        tx.onerror = function(){ rej(tx.error); };
+        tx.onabort = function(){ rej(tx.error); };
+      }); });
+    }
+    return { get:get, set:set };
+  })();
+
+  var stateLoaded = false, writing = false, writePending = false, notesFromLegacy = false, toastTimer = null;
+
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    if(!t) return;
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.hidden = true; }, 4500);
+  }
+  function clearLegacyNotes(){
+    try{ ['notepad_notes_v3','notepad_notes_v2','notepad_notes_v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
+  }
+  function loadNotesAsync(){
+    return IDB.get('notes').catch(function(){ return undefined; }).then(function(v){
+      if(Array.isArray(v)) return v;
+      var legacy = [];
+      ['notepad_notes_v3','notepad_notes_v2','notepad_notes_v1'].forEach(function(key){
+        if(legacy.length) return;
+        try{ var l = JSON.parse(localStorage.getItem(key) || '[]'); if(l.length) legacy = l; }catch(e){}
+      });
+      notesFromLegacy = legacy.length > 0;
+      return legacy;
+    });
+  }
+  function persistNotes(){
+    if(!stateLoaded) return;
+    if(writing){ writePending = true; return; }
+    writing = true;
+    IDB.set('notes', notes).then(function(){ clearLegacyNotes(); }).catch(function(){
+      try{ localStorage.setItem(STORAGE_NOTES, JSON.stringify(notes)); }
+      catch(e){ showToast("Couldn't save — this device's storage is full."); }
+    }).then(function(){
+      writing = false;
+      if(writePending){ writePending = false; persistNotes(); }
+    });
+  }
+  function flushSave(){ clearTimeout(saveTimer); persistNotes(); }
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden') flushSave(); });
+  window.addEventListener('pagehide', flushSave);
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
   function persistFolders(){ try{ localStorage.setItem(STORAGE_FOLDERS, JSON.stringify(folders)); }catch(e){} }
   function persistMode(){ try{ localStorage.setItem(STORAGE_MODE, boardMode); }catch(e){} }
   function persistScenes(){ try{ localStorage.setItem(STORAGE_SCENES, JSON.stringify(scenes)); }catch(e){} }
@@ -826,17 +901,17 @@
         ? '<button class="audio-play-btn" data-audio-id="'+n.id+'">'+micIconBig+'</button>'
         : '<span class="audio-icon">'+micIconBig+'</span>';
       return '<div class="card-body"><div class="audio-row">'+iconHtml+'<span class="audio-label'+(label?'':' untitled')+'">'+(label?escapeHtml(label):'Audio note')+'</span></div>'+
-        '<div class="card-footer"><span>'+shortDate(n.updatedAt)+'</span><span class="card-badges">'+(n.locked&&boardMode==='free'?lockSvgSmall:'')+(n.pinned?pinSvg:'')+'</span></div></div>';
+        '<div class="card-footer"><span></span><span class="card-badges">'+(n.locked&&boardMode==='free'?lockSvgSmall:'')+(n.pinned?pinSvg:'')+'</span></div></div>';
     }
     if(n.kind === 'link'){
       var lt = (n.title||'').trim() || domainFromUrl(n.url||'');
       return '<div class="card-body"><div class="link-row"><span class="link-icon">'+linkIconSmall+'</span><div style="min-width:0;overflow:hidden;"><div class="link-domain">'+escapeHtml(lt)+'</div><div class="link-url">'+escapeHtml(n.url||'')+'</div></div></div>'+
-        '<div class="card-footer"><span>'+shortDate(n.updatedAt)+'</span><span class="card-badges">'+(n.locked&&boardMode==='free'?lockSvgSmall:'')+(n.pinned?pinSvg:'')+'</span></div></div>';
+        '<div class="card-footer"><span></span><span class="card-badges">'+(n.locked&&boardMode==='free'?lockSvgSmall:'')+(n.pinned?pinSvg:'')+'</span></div></div>';
     }
     if(n.kind === 'quick'){
       var text = htmlToTextPreserveBreaks(n.body);
       return '<div class="card-body"><div class="quick-text'+(text?'':' untitled')+'">'+(text?escapeHtml(text):'Empty reminder')+'</div>'+
-        '<div class="card-footer"><span>'+shortDate(n.updatedAt)+'</span><span class="card-badges">'+(n.locked&&boardMode==='free'?lockSvgSmall:'')+(n.pinned?pinSvg:'')+'</span></div></div>';
+        '<div class="card-footer"><span></span><span class="card-badges">'+(n.locked&&boardMode==='free'?lockSvgSmall:'')+(n.pinned?pinSvg:'')+'</span></div></div>';
     }
     var title = (n.title||'').trim();
     var cover = extractFirstImageSrc(n.body);
@@ -847,7 +922,7 @@
       '<div class="card-body">' +
         '<div class="card-title'+(title?'':' untitled')+'">'+(title?escapeHtml(title):'Untitled note')+'</div>'+
         '<div class="card-snippet">'+escapeHtml(snippet)+'</div>'+
-        '<div class="card-footer"><span>'+shortDate(n.updatedAt)+'</span><span class="card-badges">'+badges+'</span></div>'+
+        '<div class="card-footer"><span></span><span class="card-badges">'+badges+'</span></div>'+
       '</div>';
   }
 
@@ -856,7 +931,7 @@
     var caption = (n.title||'').trim();
     return '<div class="card-photo-fill"><img src="'+n.image+'" alt="">'+
       (caption?'<div class="card-photo-caption">'+escapeHtml(caption)+'</div>':'')+
-      '<div class="card-photo-footer"><span>'+shortDate(n.updatedAt)+'</span><span>'+badges+'</span></div></div>';
+      '<div class="card-photo-footer"><span></span><span class="card-badges">'+badges+'</span></div></div>';
   }
 
   function renderBoard(){
@@ -879,7 +954,9 @@
       var innerHTML = n.kind === 'photo' ? photoInnerHTML(n) : cardBodyHTML(n);
       var clip = document.createElement('div');
       clip.className = 'card-clip';
-      clip.innerHTML = innerHTML;
+      clip.innerHTML = boardMode === 'masonry'
+        ? '<div class="card-swipe-wrap"><div class="card-delete-reveal">Delete</div><div class="card-inner">'+innerHTML+'</div></div>'
+        : innerHTML;
       card.appendChild(clip);
 
       function addDeleteBadge(){
@@ -916,10 +993,6 @@
         attachDrag(card, n);
       } else {
         card.style.animationDelay = Math.min(idx*16,180)+'ms';
-        if(activeCardId === n.id){
-          card.classList.add('card-active');
-          addDeleteBadge();
-        }
         attachMasonryDrag(card, n);
       }
       wireAudioPlayButton(card, n);
@@ -1015,9 +1088,49 @@
   }
 
   function attachMasonryDrag(cardEl, note){
-    cardEl.addEventListener('click', function(){
-      activeCardId = note.id;
-      openEditor(note.id);
+    var inner = cardEl.querySelector('.card-inner');
+    var reveal = cardEl.querySelector('.card-delete-reveal');
+    var startX=0, startY=0, tracking=false, swiping=false, pid=null;
+    cardEl.addEventListener('pointerdown', function(e){
+      if(e.button !== undefined && e.button !== 0) return;
+      startX = e.clientX; startY = e.clientY; tracking = true; swiping = false; pid = e.pointerId;
+    });
+    cardEl.addEventListener('pointermove', function(e){
+      if(!tracking) return;
+      var dx = e.clientX - startX, dy = e.clientY - startY;
+      if(!swiping){
+        if(Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)){ tracking = false; return; }
+        if(dx < -8 && Math.abs(dx) > Math.abs(dy)){
+          swiping = true;
+          try{ cardEl.setPointerCapture(pid); }catch(err){}
+          reveal.style.opacity = '1';
+        } else return;
+      }
+      inner.style.transform = 'translateX(' + Math.min(0, dx) + 'px)';
+    });
+    function reset(){
+      inner.style.transition = 'transform 0.18s ease';
+      inner.style.transform = 'translateX(0)';
+      setTimeout(function(){ inner.style.transition = ''; reveal.style.opacity = '0'; }, 200);
+    }
+    cardEl.addEventListener('pointerup', function(e){
+      if(!tracking) return;
+      tracking = false;
+      var dx = e.clientX - startX, dy = e.clientY - startY;
+      if(swiping){
+        swiping = false;
+        if(dx < -Math.min(90, cardEl.offsetWidth * 0.4)){
+          inner.style.transition = 'transform 0.16s ease';
+          inner.style.transform = 'translateX(-100%)';
+          setTimeout(function(){ askDelete(note.id); }, 170);
+        } else reset();
+        return;
+      }
+      if(Math.abs(dx) < 10 && Math.abs(dy) < 10) openEditor(note.id);
+    });
+    cardEl.addEventListener('pointercancel', function(){
+      tracking = false;
+      if(swiping){ swiping = false; reset(); }
     });
   }
 
@@ -2016,7 +2129,7 @@
       indicator.style.opacity = '1';
       clearTimeout(indicator._t);
       indicator._t = setTimeout(function(){ indicator.style.opacity = '0'; }, 1200);
-    }, immediate ? 0 : 450);
+    }, immediate ? 0 : 250);
   }
 
   // ---------- FULL-QUALITY PHOTO VIEWER (pinch / wheel zoom + pan) ----------
@@ -2198,9 +2311,14 @@
 
   // ---------- INIT ----------
   initTheme();
-  loadState();
-  updateArrangeBtn();
-  renderAll();
+  loadNotesAsync().then(function(list){
+    notes = list || [];
+    loadState();
+    stateLoaded = true;
+    if(notesFromLegacy) persistNotes();
+    updateArrangeBtn();
+    renderAll();
+  });
 })();
 </script>
 </body>
