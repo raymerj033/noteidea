@@ -95,7 +95,9 @@
     position:relative;
   }
   .card-clip{ overflow:hidden; border-radius:inherit; display:flex; flex-direction:column; flex:1; min-height:0; width:100%; height:100%; background:inherit; }
-  .mode-free .card{ position:absolute; touch-action:none; cursor:grab; }
+  /* unselected cards let a finger swipe scroll the board; only the selected (movable) card captures the touch to be dragged */
+  .mode-free .card{ position:absolute; touch-action:pan-x pan-y; cursor:grab; }
+  .mode-free .card.movable{ touch-action:none; }
   .mode-masonry .card{ touch-action:pan-y; width:100%; align-self:start; animation:card-in 0.2s ease both; }
   @keyframes card-in{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
   .card:hover{ box-shadow:0 2px 4px rgba(20,18,14,0.09), 0 20px 36px -14px rgba(20,18,14,0.38); }
@@ -385,6 +387,12 @@
   @media (max-width:600px){
     .editor-inner{ padding:16px 18px 20px 18px; }
     .note-title-input{ font-size:24px; }
+    /* phones: sit the bottom buttons close to the screen edge (desktop/tablet unchanged) */
+    :root{ --phone-bottom:max(12px, calc(env(safe-area-inset-bottom,0px) - 10px)); }
+    .fab-cluster{ bottom:var(--phone-bottom); }
+    .zoom-wrap, .scenes-wrap{ bottom:calc(var(--phone-bottom) + 8px); }
+    .selection-bar{ bottom:var(--phone-bottom); }
+    .editor-bottombar{ padding-bottom:calc(var(--phone-bottom) + 2px); }
   }
 </style>
 </head>
@@ -533,9 +541,9 @@
       <!-- LINK editor -->
       <div class="editor-inner link-mode" id="linkEditorInner" hidden>
         <div class="link-editor-center">
-          <div class="link-icon-big">
+          <button class="link-icon-big" id="linkIconBig" title="Open link" style="cursor:pointer;">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1.5-1.5"/></svg>
-          </div>
+          </button>
           <input type="text" class="link-title-input" id="linkTitleInput" placeholder="Label this link…" maxlength="140">
           <input type="text" class="link-url-input" id="linkUrlInput" placeholder="https://…">
           <button class="pill-btn" id="linkVisitBtn">Open link ↗</button>
@@ -639,7 +647,11 @@
   var STORAGE_SCENES = 'notepad_scenes_v1';
   var COLORS = ['paper','pink','lime','sky','dark'];
   var CARD_W_MIN=140, CARD_W_MAX=460, CARD_H_MIN=110, CARD_H_MAX=460;
-  var BOARD_OFFSET = 3000;
+  var BOARD_OFFSET = 3000; // legacy origin: only used to convert views/scenes saved before the board became dynamic
+  // Dynamic board: the origin (offX/offY) and size follow the content, so the board grows as notes need space.
+  var offX = BOARD_OFFSET, offY = BOARD_OFFSET;
+  var BOARD_MARGIN = 450;  // free space (logical px) kept around the outermost content
+  var BOARD_HOME = 250;    // minimum half-size of the board around the origin (empty board)
 
   var notes = [];
   var folders = [];
@@ -904,20 +916,76 @@
       document.getElementById('zoomPct').textContent = Math.round(boardZoom*100) + '%';
     }
     applyZoom();
-    if(v && typeof v.left === 'number'){ board.scrollLeft = v.left; board.scrollTop = v.top; }
+    if(v && typeof v.left === 'number'){
+      // saved scroll is relative to the origin used when it was saved (old saves had none = 3000)
+      var sz = (typeof v.zoom === 'number') ? clamp(v.zoom, 0.4, 2.2) : boardZoom;
+      var sox = typeof freeView.ox === 'number' ? freeView.ox : BOARD_OFFSET;
+      var soy = typeof freeView.oy === 'number' ? freeView.oy : BOARD_OFFSET;
+      board.scrollLeft = (v.left/sz - sox + offX) * boardZoom;
+      board.scrollTop = (v.top/sz - soy + offY) * boardZoom;
+    }
     else centerBoardScroll();
   }
   board.addEventListener('scroll', function(){
-    if(boardMode === 'free'){
-      freeView = {left:board.scrollLeft, top:board.scrollTop, zoom:boardZoom};
-      clearTimeout(viewTimer);
-      viewTimer = setTimeout(function(){ try{ localStorage.setItem(STORAGE_VIEW, JSON.stringify(freeView)); }catch(e){} }, 300);
-    } else { masonryTop = board.scrollTop; }
+    if(boardMode === 'free'){ trackFreeView(); }
+    else { masonryTop = board.scrollTop; }
   });
+  function trackFreeView(){
+    freeView = {left:board.scrollLeft, top:board.scrollTop, zoom:boardZoom, ox:offX, oy:offY};
+    clearTimeout(viewTimer);
+    viewTimer = setTimeout(function(){ try{ localStorage.setItem(STORAGE_VIEW, JSON.stringify(freeView)); }catch(e){} }, 300);
+  }
 
   function centerBoardScroll(){
-    board.scrollLeft = BOARD_OFFSET - board.clientWidth/2;
-    board.scrollTop = BOARD_OFFSET - board.clientHeight/2;
+    board.scrollLeft = offX * boardZoom - board.clientWidth/2;
+    board.scrollTop = offY * boardZoom - board.clientHeight/2;
+  }
+
+  // ---------- DYNAMIC BOARD SIZE ----------
+  // Board = bounding box of all notes (+ saved scenes) + margin, never smaller than the "home" area.
+  function computeBoardBounds(){
+    var x1=-BOARD_HOME, y1=-BOARD_HOME, x2=BOARD_HOME, y2=BOARD_HOME;
+    notes.forEach(function(n){
+      if(typeof n.x !== 'number' || typeof n.y !== 'number') return;
+      var w = n.w || 210;
+      var h = n.sized ? (n.h || 260) : Math.max(n.h || 260, 360); // auto-height cards can be taller than n.h
+      var pad = 40; // rotation / shadow / handles
+      x1 = Math.min(x1, n.x - pad); y1 = Math.min(y1, n.y - pad);
+      x2 = Math.max(x2, n.x + w + pad); y2 = Math.max(y2, n.y + h + pad);
+    });
+    // keep every saved scene reachable
+    scenes.forEach(function(s){
+      var z = s.zoom || 1;
+      var ox = typeof s.ox === 'number' ? s.ox : BOARD_OFFSET;
+      var oy = typeof s.oy === 'number' ? s.oy : BOARD_OFFSET;
+      var l = s.scrollLeft / z - ox, t = s.scrollTop / z - oy;
+      var r = l + board.clientWidth / z, b = t + board.clientHeight / z;
+      if(!isFinite(l) || !isFinite(t) || !isFinite(r) || !isFinite(b)) return;
+      x1 = Math.min(x1, l); y1 = Math.min(y1, t); x2 = Math.max(x2, r); y2 = Math.max(y2, b);
+    });
+    return {x1:x1, y1:y1, x2:x2, y2:y2};
+  }
+  function layoutBoard(){
+    if(boardMode !== 'free'){ boardInner.style.width = ''; boardInner.style.height = ''; return; }
+    var b = computeBoardBounds();
+    var nox = Math.round(BOARD_MARGIN - b.x1), noy = Math.round(BOARD_MARGIN - b.y1);
+    var nw = Math.ceil(b.x2 - b.x1 + 2*BOARD_MARGIN), nh = Math.ceil(b.y2 - b.y1 + 2*BOARD_MARGIN);
+    var dx = nox - offX, dy = noy - offY;
+    var sl = board.scrollLeft, st = board.scrollTop;
+    offX = nox; offY = noy;
+    boardInner.style.width = nw + 'px';
+    boardInner.style.height = nh + 'px';
+    if(dx || dy){
+      // origin moved: re-place existing cards and shift the scroll so the view doesn't jump
+      Array.prototype.forEach.call(boardInner.querySelectorAll('.card[data-note-id]'), function(el){
+        var n = getNote(el.getAttribute('data-note-id'));
+        if(n) el.style.transform = 'translate('+(n.x+offX)+'px,'+(n.y+offY)+'px) rotate('+n.rot+'deg)';
+      });
+      var z = boardZoom || 1;
+      board.scrollLeft = sl + dx * z;
+      board.scrollTop = st + dy * z;
+      if(lastRenderedMode === 'free') trackFreeView();
+    }
   }
 
   function applyZoom(){
@@ -950,7 +1018,7 @@
     }
     if(n.kind === 'link'){
       var lt = (n.title||'').trim() || domainFromUrl(n.url||'');
-      return '<div class="card-body"><div class="link-row"><span class="link-icon">'+linkIconSmall+'</span><div style="min-width:0;overflow:hidden;"><div class="link-domain">'+escapeHtml(lt)+'</div><div class="link-url">'+escapeHtml(n.url||'')+'</div></div></div>'+
+      return '<div class="card-body"><div class="link-row"><button class="link-icon" data-link-id="'+n.id+'" title="Open link">'+linkIconSmall+'</button><div style="min-width:0;overflow:hidden;"><div class="link-domain">'+escapeHtml(lt)+'</div><div class="link-url">'+escapeHtml(n.url||'')+'</div></div></div>'+
         '<div class="card-footer"><span></span><span class="card-badges">'+(n.locked&&boardMode==='free'?lockSvgSmall:'')+(n.pinned?pinSvg:'')+'</span></div></div>';
     }
     if(n.kind === 'quick'){
@@ -983,6 +1051,7 @@
     boardInner.className = 'board-inner ' + (boardMode==='masonry' ? 'mode-masonry' : 'mode-free');
     boardInner.innerHTML = '';
     board.style.overflowX = boardMode==='masonry' ? 'hidden' : 'auto';
+    layoutBoard();
 
     var list = boardMode === 'masonry' ? visibleNotesOrdered() : notes;
     masonryCards = [];
@@ -994,6 +1063,7 @@
       card.setAttribute('data-note-id', n.id);
       var cls = 'card kind-' + n.kind + ' color-' + n.color + (natural ? ' auto-size' : ' sized') + (matchesFilter(n) ? '' : ' faded');
       if(boardMode==='free' && selectionMode){ cls += selectedIds[n.id] ? ' selected' : ' select-dim'; }
+      if(boardMode==='free' && !n.locked && ((selectionMode && selectedIds[n.id]) || (!selectionMode && activeCardId === n.id))) cls += ' movable';
       card.className = cls;
 
       var innerHTML = n.kind === 'photo' ? photoInnerHTML(n) : cardBodyHTML(n);
@@ -1014,7 +1084,7 @@
       }
 
       if(boardMode === 'free'){
-        card.style.transform = 'translate('+(n.x+BOARD_OFFSET)+'px,'+(n.y+BOARD_OFFSET)+'px) rotate('+n.rot+'deg)';
+        card.style.transform = 'translate('+(n.x+offX)+'px,'+(n.y+offY)+'px) rotate('+n.rot+'deg)';
         card.style.width = n.w + 'px';
         card.style.height = n.sized ? (n.h + 'px') : 'auto';
         card.style.zIndex = n.z;
@@ -1059,7 +1129,12 @@
 
   function wireLinkOpen(card, n){
     if(n.kind !== 'link') return;
-    // clicking the card opens the editor as usual; nothing special needed here
+    var btn = card.querySelector('.link-icon[data-link-id]');
+    if(!btn) return;
+    ['pointerdown','pointerup','click'].forEach(function(evt){
+      btn.addEventListener(evt, function(e){ e.stopPropagation(); });
+    });
+    btn.addEventListener('click', function(){ if(n.url) window.open(n.url, '_blank'); });
   }
 
   function wireAudioPlayButton(card, n){
@@ -1182,7 +1257,7 @@
 
   function attachDrag(cardEl, note){
     var startX, startY, origX, origY, moved=false, isDraggable=false, groupDrag=false, group=null, longPressTimer=null, longPressFired=false, tracking=false;
-    function place(n, el){ el.style.transform = 'translate('+(n.x+BOARD_OFFSET)+'px,'+(n.y+BOARD_OFFSET)+'px) rotate('+n.rot+'deg)'; }
+    function place(n, el){ el.style.transform = 'translate('+(n.x+offX)+'px,'+(n.y+offY)+'px) rotate('+n.rot+'deg)'; }
     cardEl.addEventListener('pointerdown', function(e){
       if(e.button !== undefined && e.button !== 0) return;
       cardEl.setPointerCapture(e.pointerId);
@@ -1201,7 +1276,8 @@
           groupDrag = group.length > 0;
         }
       } else {
-        isDraggable = !note.locked;
+        // touch/pen: only an already-selected card can be moved (a swipe on any other card scrolls the board). Mouse keeps direct drag.
+        isDraggable = !note.locked && (e.pointerType === 'mouse' || activeCardId === note.id);
         if(isDraggable){ bringToFront(note); cardEl.style.zIndex = note.z; cardEl.classList.add('dragging'); }
         if(e.pointerType !== 'mouse'){
           longPressTimer = setTimeout(function(){
@@ -1239,14 +1315,20 @@
       tracking = false;
       if(isDraggable) cardEl.classList.remove('dragging');
       if(selectionMode){
-        if(groupDrag && moved){ persistNotes(); }
+        if(groupDrag && moved){ persistNotes(); layoutBoard(); }
         else if(!longPressFired && !moved) toggleSelect(note.id);
       } else if(isDraggable && moved){
         persistNotes();
+        layoutBoard();
         if(activeCardId !== note.id){ activeCardId = note.id; renderBoard(); }
       } else if(!moved && !longPressFired){
-        activeCardId = note.id;
-        openEditor(note.id);
+        if(activeCardId === note.id){
+          openEditor(note.id);               // 2nd tap: open preview/editor (a photo opens the original with a tap inside it)
+        } else {
+          activeCardId = note.id;            // 1st tap: select
+          bringToFront(note); persistNotes();
+          renderBoard();
+        }
       }
       longPressFired = false; moved = false; isDraggable = false; groupDrag = false; group = null;
     }
@@ -1308,7 +1390,7 @@
       e.stopPropagation();
       var angle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180/Math.PI;
       note.rot = Math.round((startRot + (angle - startAngle) + 90) * 10) / 10;
-      cardEl.style.transform = 'translate('+(note.x+BOARD_OFFSET)+'px,'+(note.y+BOARD_OFFSET)+'px) rotate('+note.rot+'deg)';
+      cardEl.style.transform = 'translate('+(note.x+offX)+'px,'+(note.y+offY)+'px) rotate('+note.rot+'deg)';
     });
     function end(e){
       if(!rotating) return;
@@ -1321,14 +1403,36 @@
     handleEl.addEventListener('pointercancel', end);
   }
 
-  function placeNewNotePosition(){
-    var vw = board.clientWidth, vh = board.clientHeight;
-    var logicalScrollLeft = board.scrollLeft - BOARD_OFFSET;
-    var logicalScrollTop = board.scrollTop - BOARD_OFFSET;
-    var n = notes.length;
-    var jitterX = (n * 34) % 160;
-    var jitterY = (n * 27) % 120;
-    return { x: logicalScrollLeft + vw/2 - 100 + jitterX, y: logicalScrollTop + vh/2 - 120 + jitterY };
+  // centre of what the user is looking at, in board (logical) coordinates.
+  // In masonry mode the free view isn't on screen, so use the last saved free view.
+  function viewCenterLogical(){
+    var vw = board.clientWidth, vh = board.clientHeight, z, sl, st, ox, oy;
+    if(boardMode === 'free'){ z = boardZoom || 1; sl = board.scrollLeft; st = board.scrollTop; ox = offX; oy = offY; }
+    else if(freeView && typeof freeView.left === 'number'){
+      z = clamp(freeView.zoom || 1, 0.4, 2.2); sl = freeView.left; st = freeView.top;
+      ox = typeof freeView.ox === 'number' ? freeView.ox : BOARD_OFFSET;
+      oy = typeof freeView.oy === 'number' ? freeView.oy : BOARD_OFFSET;
+    } else return {x:0, y:0};
+    return { x:(sl + vw/2)/z - ox, y:(st + vh/2)/z - oy };
+  }
+  function placeNewNotePosition(size){
+    size = size || {w:210, h:260};
+    var c = viewCenterLogical();
+    // don't land exactly on top of another item: nudge diagonally while a card is already centred there
+    var nudge = 0;
+    if(boardMode === 'free'){
+      var z = boardZoom || 1, br = board.getBoundingClientRect();
+      var centers = Array.prototype.map.call(boardInner.querySelectorAll('.card[data-note-id]'), function(el){
+        var r = el.getBoundingClientRect(); return {x:r.left + r.width/2, y:r.top + r.height/2};
+      });
+      for(var k=0; k<40; k++){
+        var tx = br.left + board.clientWidth/2 + nudge*z, ty = br.top + board.clientHeight/2 + nudge*z;
+        var clash = centers.some(function(p){ return Math.abs(p.x - tx) < 14 && Math.abs(p.y - ty) < 14; });
+        if(!clash) break;
+        nudge += 26;
+      }
+    }
+    return { x:c.x - size.w/2 + nudge, y:c.y - size.h/2 + nudge, cx:c.x, cy:c.y, nudge:nudge };
   }
 
   // ---------- ZOOM ----------
@@ -1394,7 +1498,7 @@
     document.getElementById('sceneAddBtn').addEventListener('click', function(){
       var input = document.getElementById('sceneNameInput');
       var name = input.value.trim() || ('Scene ' + (scenes.length+1));
-      scenes.push({id:uid(), name:name, scrollLeft:board.scrollLeft, scrollTop:board.scrollTop, zoom:boardZoom});
+      scenes.push({id:uid(), name:name, scrollLeft:board.scrollLeft, scrollTop:board.scrollTop, zoom:boardZoom, ox:offX, oy:offY});
       persistScenes(); renderScenesPanel();
     });
   }
@@ -1404,7 +1508,14 @@
     var go = e.target.closest('[data-scene]');
     if(go){
       var s = scenes.find(function(x){return x.id===go.getAttribute('data-scene');});
-      if(s){ board.scrollLeft=s.scrollLeft; board.scrollTop=s.scrollTop; boardZoom=s.zoom||1; zoomSlider.value=Math.round(boardZoom*100); document.getElementById('zoomPct').textContent=Math.round(boardZoom*100)+'%'; applyZoom(); }
+      if(s){
+        var sz = s.zoom || 1;
+        var sox = typeof s.ox === 'number' ? s.ox : BOARD_OFFSET;
+        var soy = typeof s.oy === 'number' ? s.oy : BOARD_OFFSET;
+        boardZoom = sz; zoomSlider.value = Math.round(boardZoom*100); document.getElementById('zoomPct').textContent = Math.round(boardZoom*100)+'%'; applyZoom();
+        board.scrollLeft = (s.scrollLeft/sz - sox + offX) * sz;
+        board.scrollTop = (s.scrollTop/sz - soy + offY) * sz;
+      }
       setScenesOpen(false);
     }
   });
@@ -1433,7 +1544,7 @@
       var w = Math.abs(curX-startX), h = Math.abs(curY-startY);
       marqueeBox.style.left = Math.min(startCX, clientX)+'px'; marqueeBox.style.top = Math.min(startCY, clientY)+'px';
       marqueeBox.style.width = Math.abs(clientX-startCX)+'px'; marqueeBox.style.height = Math.abs(clientY-startCY)+'px';
-      var boxLogical = { x1:x-BOARD_OFFSET, y1:y-BOARD_OFFSET, x2:x+w-BOARD_OFFSET, y2:y+h-BOARD_OFFSET };
+      var boxLogical = { x1:x-offX, y1:y-offY, x2:x+w-offX, y2:y+h-offY };
       selectedIds = {};
       notes.forEach(function(n){
         if(n.x < boxLogical.x2 && n.x+n.w > boxLogical.x1 && n.y < boxLogical.y2 && n.y+n.h > boxLogical.y1){
@@ -1626,6 +1737,7 @@
     notes.unshift(note);
     persistNotes();
     renderAll();
+    recenterNewItem(note);
     openEditor(note.id);
   }
   function createFromText(text){
@@ -1737,14 +1849,38 @@
 
   // ---------- ITEM CREATE ----------
   function baseNewItem(kind){
-    var pos = placeNewNotePosition();
     var size = defaultSize(kind);
-    return {
+    var pos = placeNewNotePosition(size);
+    var item = {
       id: uid(), kind: kind, title: '', body: '', folderId: (selectedFolder!=='all'?selectedFolder:null),
       pinned:false, locked:false, grouped:false, createdAt: Date.now(), updatedAt: Date.now(),
       x: pos.x, y: pos.y, rot: Math.round((Math.random()*6-3)*10)/10,
       w: size.w, h: size.h, sized: false, color: 'paper', image: null, audio: null, url:null, z: ++zTop
     };
+    lastNewCenter = { id:item.id, cx:pos.cx, cy:pos.cy, nudge:pos.nudge }; // not saved with the note
+    return item;
+  }
+  // New cards have automatic height, so once rendered we measure the real height and centre it exactly on the view.
+  var lastNewCenter = null;
+  function recenterNewItem(note){
+    if(!lastNewCenter || lastNewCenter.id !== note.id || boardMode !== 'free' || note.sized) return;
+    function fix(){
+      if(!lastNewCenter || lastNewCenter.id !== note.id) return;
+      var el = boardInner.querySelector('.card[data-note-id="'+note.id+'"]');
+      if(!el) return;
+      var z = boardZoom || 1, r = el.getBoundingClientRect();
+      var th = Math.abs(note.rot) * Math.PI / 180;
+      var h = ((r.height - note.w * z * Math.sin(th)) / Math.cos(th)) / z; // un-rotated logical height
+      if(!isFinite(h) || h < 10) return; // not laid out yet (e.g. photo still decoding)
+      note.y = lastNewCenter.cy - h/2 + lastNewCenter.nudge;
+      el.style.transform = 'translate('+(note.x+offX)+'px,'+(note.y+offY)+'px) rotate('+note.rot+'deg)';
+      lastNewCenter = null;
+      persistNotes();
+    }
+    fix();
+    var el0 = boardInner.querySelector('.card[data-note-id="'+note.id+'"]');
+    var img = el0 && el0.querySelector('img');
+    if(lastNewCenter && img && !img.complete) img.addEventListener('load', fix, {once:true});
   }
 
   function createItem(kind){
@@ -1753,6 +1889,7 @@
     persistNotes();
     if(boardMode === 'masonry') { boardMode='free'; persistMode(); updateArrangeBtn(); }
     renderAll();
+    recenterNewItem(note);
     openEditor(note.id);
   }
   function createLinkItem(url){
@@ -1762,6 +1899,7 @@
     persistNotes();
     if(boardMode === 'masonry') { boardMode='free'; persistMode(); updateArrangeBtn(); }
     renderAll();
+    recenterNewItem(note);
     openEditor(note.id);
   }
 
@@ -1782,6 +1920,7 @@
     persistNotes();
     if(boardMode === 'masonry') { boardMode='free'; persistMode(); updateArrangeBtn(); }
     renderAll();
+    recenterNewItem(note);
     openEditor(note.id);
   }
 
@@ -2176,6 +2315,10 @@
     var note = getNote(openNoteId); if(!note) return;
     var v = linkUrlInput.value.trim();
     note.url = v; touch(note); scheduleSave();
+  });
+  document.getElementById('linkIconBig').addEventListener('click', function(){
+    var note = getNote(openNoteId); if(!note || !note.url) return;
+    window.open(note.url, '_blank');
   });
   document.getElementById('linkVisitBtn').addEventListener('click', function(){
     var note = getNote(openNoteId); if(!note || !note.url) return;
