@@ -71,7 +71,7 @@
     -webkit-overflow-scrolling:touch;
     transition:background-color 0.2s ease;
   }
-  .board-inner.mode-free{ position:relative; width:6000px; height:6000px; transform-origin:0 0; }
+  .board-inner.mode-free{ position:relative; width:100%; height:100%; transform-origin:0 0; }
   .board-inner.mode-masonry{
     display:flex; gap:14px; align-items:flex-start;
     width:100%; max-width:1400px; margin:0 auto;
@@ -197,8 +197,16 @@
   .zoom-wrap[hidden]{ display:none; }
   .zoom-slider-pop{ background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:12px 8px; box-shadow:0 8px 22px -10px rgba(20,18,14,0.3); display:flex; flex-direction:column; align-items:center; gap:6px; }
   .zoom-slider-pop[hidden]{ display:none; }
-  .zoom-slider-pop input[type=range]{ writing-mode:vertical-lr; direction:rtl; width:22px; height:200px; }
-  .zoom-pct{ font-size:11px; color:var(--ink-soft); font-weight:500; }
+  .zoom-pct{ font-size:11px; color:var(--ink-soft); font-weight:500; background:none; border:none; padding:4px 6px; border-radius:8px; min-width:44px; }
+  .zoom-pct:hover{ background:var(--border); }
+  .zoom-mini{ width:32px; height:32px; border-radius:50%; border:1px solid var(--border); background:var(--surface); color:var(--ink); font-size:18px; line-height:1; padding:0; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .zoom-mini:active{ background:var(--border); }
+  .zoom-mini.zoom-fit{ font-size:11px; font-weight:600; }
+  .zoom-track{ position:relative; width:40px; height:170px; height:clamp(80px, calc(100dvh - 300px), 170px); touch-action:none; cursor:pointer; outline:none; flex-shrink:0; }
+  .zoom-track-line{ position:absolute; left:50%; top:11px; bottom:11px; width:4px; margin-left:-2px; border-radius:2px; background:var(--border); }
+  .zoom-tick{ position:absolute; left:50%; width:14px; margin-left:-7px; height:2px; border-radius:1px; background:var(--ink-soft); opacity:0.5; }
+  .zoom-thumb{ position:absolute; left:50%; width:24px; height:24px; margin:-12px 0 0 -12px; border-radius:50%; background:var(--accent); border:2px solid var(--surface); box-shadow:0 2px 8px -2px rgba(20,18,14,0.45); }
+  .zoom-track:focus-visible .zoom-thumb{ outline:2px solid var(--accent); outline-offset:2px; }
 
   .scenes-wrap{ left:66px; bottom:calc(44px + env(safe-area-inset-bottom,0px)); }
   .scenes-wrap[hidden]{ display:none; }
@@ -341,6 +349,15 @@
   .editor-plus-btn.open{ transform:rotate(45deg); }
   .editor-menu{ position:fixed; z-index:260; background:var(--surface); color:var(--ink); border:1px solid var(--border); border-radius:14px; box-shadow:0 16px 34px -14px rgba(20,18,14,0.35); padding:6px; display:flex; flex-direction:column; gap:2px; min-width:190px; animation:menu-in 0.14s ease; }
   .editor-menu[hidden]{ display:none; }
+  /* text tools bar */
+  .text-tools{ position:absolute; left:50%; bottom:0; transform:translateX(-50%); width:calc(100% - 16px); max-width:440px; z-index:240; display:flex; align-items:center; justify-content:space-around; gap:2px; padding:5px 6px; background:var(--surface); color:var(--ink); border:1px solid var(--border); border-radius:16px; box-shadow:0 12px 30px -12px rgba(20,18,14,0.4); }
+  .text-tools[hidden]{ display:none; }
+  .text-tools:not([hidden]){ animation:textToolsIn 0.14s ease-out; }
+  @keyframes textToolsIn{ from{ opacity:0; transform:translate(-50%,6px); } to{ opacity:1; transform:translate(-50%,0); } }
+  .text-tools button{ width:40px; height:40px; border-radius:10px; border:none; background:none; color:var(--ink); display:flex; align-items:center; justify-content:center; flex-shrink:0; padding:0; }
+  .text-tools button:hover, .text-tools button:active{ background:var(--border); }
+  .text-tools .fm-icon{ width:18px; height:18px; display:flex; align-items:center; justify-content:center; color:inherit; }
+  .text-tools .fm-sep{ width:1px; height:22px; background:var(--border); margin:0 3px; flex-shrink:0; }
   .editor-menu button{ display:flex; align-items:center; gap:10px; background:none; border:none; color:var(--ink); padding:9px 10px; border-radius:9px; font-size:13.5px; text-align:left; transition:background 0.12s ease; }
   .editor-menu button:hover{ background:var(--border); }
   .editor-menu .fm-icon{ width:16px; height:16px; flex-shrink:0; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; }
@@ -428,8 +445,15 @@
   <!-- ZOOM -->
   <div class="float zoom-wrap" id="zoomWrap">
     <div class="zoom-slider-pop" id="zoomSliderPop" hidden>
-      <span class="zoom-pct" id="zoomPct">100%</span>
-      <input type="range" id="zoomSlider" min="40" max="220" value="100">
+      <button class="zoom-pct" id="zoomPct" title="Reset to 100%">100%</button>
+      <button class="zoom-mini" id="zoomInBtn" title="Zoom in">+</button>
+      <div class="zoom-track" id="zoomSlider" role="slider" tabindex="0" aria-orientation="vertical" aria-label="Zoom" aria-valuemin="40" aria-valuemax="220" aria-valuenow="100">
+        <div class="zoom-track-line"></div>
+        <div class="zoom-tick" id="zoomTick"></div>
+        <div class="zoom-thumb" id="zoomThumb"></div>
+      </div>
+      <button class="zoom-mini" id="zoomOutBtn" title="Zoom out">&minus;</button>
+      <button class="zoom-mini zoom-fit" id="zoomFitBtn" title="Fit all notes">Fit</button>
     </div>
     <button class="round-btn" id="zoomBtn" title="Zoom">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 00-2 2v3"/><path d="M16 3h3a2 2 0 012 2v3"/><path d="M8 21H5a2 2 0 01-2-2v-3"/><path d="M16 21h3a2 2 0 002-2v-3"/></svg>
@@ -558,22 +582,6 @@
       </button>
       <div class="etb-sep"></div>
 
-      <span id="noteToolbarGroup" style="display:flex; align-items:center;">
-        <button class="editor-plus-btn" id="formatToggleBtn" title="Format & insert">+</button>
-        <div class="editor-menu" id="formatPopover" hidden>
-          <button data-cmd="bold"><span class="fm-icon"><strong style="font-size:14px;">B</strong></span>Bold</button>
-          <button data-cmd="italic"><span class="fm-icon"><span style="font-style:italic;font-size:14px;font-weight:600;">i</span></span>Italic</button>
-          <button data-cmd="h1"><span class="fm-icon"><span style="font-size:11px;font-weight:700;">H1</span></span>Heading</button>
-          <button data-cmd="h2"><span class="fm-icon"><span style="font-size:11px;font-weight:700;">H2</span></span>Subheading</button>
-          <button data-cmd="ul"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1" fill="currentColor" stroke="none"/><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/></svg></span>Bullet list</button>
-          <div class="fm-sep"></div>
-          <button id="imageBtn"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-5-9 9"/></svg></span>Image / GIF</button>
-          <button id="noteAudioBtn"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg></span>Audio</button>
-          <button id="drawBtn"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span>Draw</button>
-        </div>
-        <div class="etb-sep"></div>
-      </span>
-
       <input type="file" id="imageInput" accept="image/*,.gif" hidden>
       <input type="file" id="noteAudioInput" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" hidden>
       <input type="file" id="audioUploadInput" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" hidden>
@@ -596,6 +604,19 @@
       <div class="etb-flex-spacer"></div>
       <span class="save-indicator" id="saveIndicator" style="font-size:11px; opacity:0;">Saved</span>
     </div>
+    <!-- TEXT TOOLS: only while typing in a note. Bar under the text; on phones it rides on top of the keyboard. -->
+    <div class="text-tools" id="textToolsBar" hidden>
+      <button data-cmd="bold" title="Bold"><span class="fm-icon"><strong style="font-size:14px;">B</strong></span></button>
+      <button data-cmd="italic" title="Italic"><span class="fm-icon"><span style="font-style:italic;font-size:14px;font-weight:600;">i</span></span></button>
+      <button data-cmd="h1" title="Heading"><span class="fm-icon"><span style="font-size:11px;font-weight:700;">H1</span></span></button>
+      <button data-cmd="h2" title="Subheading"><span class="fm-icon"><span style="font-size:11px;font-weight:700;">H2</span></span></button>
+      <button data-cmd="ul" title="Bullet list"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1" fill="currentColor" stroke="none"/><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/></svg></span></button>
+      <div class="fm-sep"></div>
+      <button id="imageBtn" title="Image / GIF"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-5-9 9"/></svg></span></button>
+      <button id="noteAudioBtn" title="Audio"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg></span></button>
+      <button id="drawBtn" title="Draw"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span></button>
+    </div>
+
   </div>
 
   <!-- FULL PHOTO VIEWER -->
@@ -650,8 +671,9 @@
   var BOARD_OFFSET = 3000; // legacy origin: only used to convert views/scenes saved before the board became dynamic
   // Dynamic board: the origin (offX/offY) and size follow the content, so the board grows as notes need space.
   var offX = BOARD_OFFSET, offY = BOARD_OFFSET;
-  var BOARD_MARGIN = 450;  // free space (logical px) kept around the outermost content
-  var BOARD_HOME = 250;    // minimum half-size of the board around the origin (empty board)
+  var BOARD_PAD = 6;       // small breathing room (logical px) kept around the outermost note
+  // temporary extra room added while a note is being dragged against a board edge (reset on drop)
+  var dragExtra = {l:0, r:0, t:0, b:0};
 
   var notes = [];
   var folders = [];
@@ -912,10 +934,10 @@
     var v = freeView ? {left:freeView.left, top:freeView.top, zoom:freeView.zoom} : null;
     if(v && typeof v.zoom === 'number'){
       boardZoom = clamp(v.zoom, 0.4, 2.2);
-      zoomSlider.value = Math.round(boardZoom*100);
-      document.getElementById('zoomPct').textContent = Math.round(boardZoom*100) + '%';
     }
     applyZoom();
+    syncZoomUI();
+    layoutBoard();
     if(v && typeof v.left === 'number'){
       // saved scroll is relative to the origin used when it was saved (old saves had none = 3000)
       var sz = (typeof v.zoom === 'number') ? clamp(v.zoom, 0.4, 2.2) : boardZoom;
@@ -942,34 +964,33 @@
   }
 
   // ---------- DYNAMIC BOARD SIZE ----------
-  // Board = bounding box of all notes (+ saved scenes) + margin, never smaller than the "home" area.
+  // Empty board = exactly the screen. It only grows to hold notes (+ a small pad) and shrinks back when they go away.
+  // Empty space beyond the notes can't be scrolled to: it only appears while a note is dragged against an edge (dragExtra).
   function computeBoardBounds(){
-    var x1=-BOARD_HOME, y1=-BOARD_HOME, x2=BOARD_HOME, y2=BOARD_HOME;
+    var z = boardZoom || 1;
+    var zc = Math.min(z, 1); // zoom-in magnifies the screen-sized canvas; zoom-out still fills the screen
+    var x1 = 0, y1 = 0, x2 = Math.floor(board.clientWidth / zc), y2 = Math.floor(board.clientHeight / zc);
+    var br = board.getBoundingClientRect();
+    var els = {};
+    Array.prototype.forEach.call(boardInner.querySelectorAll('.card[data-note-id]'), function(el){ els[el.getAttribute('data-note-id')] = el; });
     notes.forEach(function(n){
       if(typeof n.x !== 'number' || typeof n.y !== 'number') return;
-      var w = n.w || 210;
-      var h = n.sized ? (n.h || 260) : Math.max(n.h || 260, 360); // auto-height cards can be taller than n.h
-      var pad = 40; // rotation / shadow / handles
-      x1 = Math.min(x1, n.x - pad); y1 = Math.min(y1, n.y - pad);
-      x2 = Math.max(x2, n.x + w + pad); y2 = Math.max(y2, n.y + h + pad);
+      var l, t, r, b, el = els[n.id];
+      if(el){ // measured (includes auto height and rotation)
+        var rc = el.getBoundingClientRect();
+        l = (rc.left - br.left + board.scrollLeft)/z - offX; t = (rc.top - br.top + board.scrollTop)/z - offY;
+        r = (rc.right - br.left + board.scrollLeft)/z - offX; b = (rc.bottom - br.top + board.scrollTop)/z - offY;
+      } else { l = n.x; t = n.y; r = n.x + (n.w || 210); b = n.y + (n.h || 260); }
+      x1 = Math.min(x1, l - BOARD_PAD); y1 = Math.min(y1, t - BOARD_PAD);
+      x2 = Math.max(x2, r + BOARD_PAD); y2 = Math.max(y2, b + BOARD_PAD);
     });
-    // keep every saved scene reachable
-    scenes.forEach(function(s){
-      var z = s.zoom || 1;
-      var ox = typeof s.ox === 'number' ? s.ox : BOARD_OFFSET;
-      var oy = typeof s.oy === 'number' ? s.oy : BOARD_OFFSET;
-      var l = s.scrollLeft / z - ox, t = s.scrollTop / z - oy;
-      var r = l + board.clientWidth / z, b = t + board.clientHeight / z;
-      if(!isFinite(l) || !isFinite(t) || !isFinite(r) || !isFinite(b)) return;
-      x1 = Math.min(x1, l); y1 = Math.min(y1, t); x2 = Math.max(x2, r); y2 = Math.max(y2, b);
-    });
-    return {x1:x1, y1:y1, x2:x2, y2:y2};
+    return {x1:x1 - dragExtra.l, y1:y1 - dragExtra.t, x2:x2 + dragExtra.r, y2:y2 + dragExtra.b};
   }
   function layoutBoard(){
     if(boardMode !== 'free'){ boardInner.style.width = ''; boardInner.style.height = ''; return; }
     var b = computeBoardBounds();
-    var nox = Math.round(BOARD_MARGIN - b.x1), noy = Math.round(BOARD_MARGIN - b.y1);
-    var nw = Math.ceil(b.x2 - b.x1 + 2*BOARD_MARGIN), nh = Math.ceil(b.y2 - b.y1 + 2*BOARD_MARGIN);
+    var nox = Math.round(-b.x1), noy = Math.round(-b.y1);
+    var nw = Math.ceil(b.x2 - b.x1), nh = Math.ceil(b.y2 - b.y1);
     var dx = nox - offX, dy = noy - offY;
     var sl = board.scrollLeft, st = board.scrollTop;
     offX = nox; offY = noy;
@@ -987,26 +1008,55 @@
       if(lastRenderedMode === 'free') trackFreeView();
     }
   }
+  window.addEventListener('resize', function(){ if(boardMode === 'free') layoutBoard(); });
+
+  // ---------- DRAG AGAINST THE EDGE: auto-scroll + grow ----------
+  // While a note is held near the edge of the screen the view scrolls that way. If the board has no more room, it grows once
+  // by half a screen; it can grow again only after the note leaves the edge zone and comes back (no creeping growth).
+  var edge = {raf:0, apply:null, cx:0, cy:0, armed:{l:true,r:true,t:true,b:true}};
+  function pointerLogical(cx, cy){
+    var rect = board.getBoundingClientRect(), z = boardZoom || 1;
+    return { x:(board.scrollLeft + cx - rect.left)/z - offX, y:(board.scrollTop + cy - rect.top)/z - offY };
+  }
+  function edgeStart(apply){
+    edge.apply = apply; edge.armed = {l:true,r:true,t:true,b:true};
+    if(!edge.raf) edge.raf = requestAnimationFrame(edgeTick);
+  }
+  function edgeStop(){
+    cancelAnimationFrame(edge.raf); edge.raf = 0; edge.apply = null;
+    dragExtra = {l:0, r:0, t:0, b:0};
+  }
+  function edgeTick(){
+    edge.raf = 0;
+    if(!edge.apply) return;
+    var rect = board.getBoundingClientRect(), vw = board.clientWidth, vh = board.clientHeight, z = boardZoom || 1;
+    var px = edge.cx - rect.left, py = edge.cy - rect.top, ZONE = 40;
+    var inL = px < ZONE, inR = px > vw - ZONE, inT = py < ZONE, inB = py > vh - ZONE;
+    if(!inL) edge.armed.l = true; if(!inR) edge.armed.r = true; if(!inT) edge.armed.t = true; if(!inB) edge.armed.b = true;
+    function speed(depth){ return Math.min(16, 3 + Math.max(0, depth) * 0.35); }
+    var chunkX = Math.round(vw / z * 0.5), chunkY = Math.round(vh / z * 0.5), scrolled = false;
+    if(inL){
+      if(board.scrollLeft <= 0.5 && edge.armed.l){ dragExtra.l += chunkX; edge.armed.l = false; layoutBoard(); }
+      board.scrollLeft -= speed(ZONE - px); scrolled = true;
+    } else if(inR){
+      if(board.scrollLeft >= board.scrollWidth - vw - 0.5 && edge.armed.r){ dragExtra.r += chunkX; edge.armed.r = false; layoutBoard(); }
+      board.scrollLeft += speed(px - (vw - ZONE)); scrolled = true;
+    }
+    if(inT){
+      if(board.scrollTop <= 0.5 && edge.armed.t){ dragExtra.t += chunkY; edge.armed.t = false; layoutBoard(); }
+      board.scrollTop -= speed(ZONE - py); scrolled = true;
+    } else if(inB){
+      if(board.scrollTop >= board.scrollHeight - vh - 0.5 && edge.armed.b){ dragExtra.b += chunkY; edge.armed.b = false; layoutBoard(); }
+      board.scrollTop += speed(py - (vh - ZONE)); scrolled = true;
+    }
+    if(scrolled) edge.apply(edge.cx, edge.cy);   // keep the held note under the finger while the view moves
+    edge.raf = requestAnimationFrame(edgeTick);
+  }
 
   function applyZoom(){
     if(boardMode === 'free'){ boardInner.style.zoom = boardZoom; }
     else { boardInner.style.zoom = ''; }
   }
-  function setZoomCentered(newZoom){
-    newZoom = clamp(newZoom, 0.4, 2.2);
-    if(boardMode !== 'free') { boardZoom = newZoom; return; }
-    var vw = board.clientWidth, vh = board.clientHeight;
-    var oldZoom = boardZoom || 1;
-    var contentX = (board.scrollLeft + vw/2) / oldZoom;
-    var contentY = (board.scrollTop + vh/2) / oldZoom;
-    boardZoom = newZoom;
-    applyZoom();
-    board.scrollLeft = contentX * newZoom - vw/2;
-    board.scrollTop = contentY * newZoom - vh/2;
-    zoomSlider.value = Math.round(boardZoom*100);
-    document.getElementById('zoomPct').textContent = Math.round(boardZoom*100) + '%';
-  }
-
   function cardBodyHTML(n){
     if(n.kind === 'audio'){
       var label = (n.title||'').trim();
@@ -1120,6 +1170,7 @@
     applyZoom();
     emptyCanvas.hidden = notes.length !== 0;
 
+    layoutBoard();
     if(lastRenderedMode !== boardMode){
       lastRenderedMode = boardMode;
       if(boardMode === 'free') restoreFreeView();
@@ -1256,13 +1307,13 @@
   }
 
   function attachDrag(cardEl, note){
-    var startX, startY, origX, origY, moved=false, isDraggable=false, groupDrag=false, group=null, longPressTimer=null, longPressFired=false, tracking=false;
+    var startX, startY, startPL, origX, origY, moved=false, isDraggable=false, groupDrag=false, group=null, longPressTimer=null, longPressFired=false, tracking=false;
     function place(n, el){ el.style.transform = 'translate('+(n.x+offX)+'px,'+(n.y+offY)+'px) rotate('+n.rot+'deg)'; }
     cardEl.addEventListener('pointerdown', function(e){
       if(e.button !== undefined && e.button !== 0) return;
       cardEl.setPointerCapture(e.pointerId);
       tracking = true;
-      startX = e.clientX; startY = e.clientY; origX = note.x; origY = note.y; moved = false; longPressFired = false;
+      startX = e.clientX; startY = e.clientY; startPL = pointerLogical(e.clientX, e.clientY); origX = note.x; origY = note.y; moved = false; longPressFired = false;
       groupDrag = false; group = null; isDraggable = false;
       if(selectionMode){
         if(selectedIds[note.id]){
@@ -1296,23 +1347,48 @@
         clearTimeout(longPressTimer);
       }
       if(!moved) return;
-      var z = boardZoom || 1;
+      edge.cx = e.clientX; edge.cy = e.clientY;
+      if((isDraggable || groupDrag) && !edge.apply) edgeStart(applyDrag);
+      applyDrag(e.clientX, e.clientY);
+    });
+    // position from where the pointer is on the board (stays right while the view auto-scrolls or the board grows)
+    function applyDrag(cx, cy){
+      var pl = pointerLogical(cx, cy), dx = pl.x - startPL.x, dy = pl.y - startPL.y;
+      var items = [];
       if(isDraggable){
-        note.x = origX + dx / z;
-        note.y = origY + dy / z;
-        place(note, cardEl);
+        note.x = origX + dx; note.y = origY + dy; place(note, cardEl);
+        items.push({n:note, el:cardEl});
       } else if(groupDrag){
         group.forEach(function(g){
-          g.n.x = g.x + dx / z;
-          g.n.y = g.y + dy / z;
-          place(g.n, g.el);
+          g.n.x = g.x + dx; g.n.y = g.y + dy; place(g.n, g.el);
+          items.push({n:g.n, el:g.el});
         });
       }
-    });
+      clampDragged(items);
+    }
+    // never let what is being dragged leave the board: it can only go further once the board has grown at the edge
+    function clampDragged(items){
+      if(!items.length) return;
+      var z = boardZoom || 1, br = board.getBoundingClientRect();
+      var W = parseFloat(boardInner.style.width) || 0, H = parseFloat(boardInner.style.height) || 0;
+      var l=Infinity, t=Infinity, r=-Infinity, b=-Infinity;
+      items.forEach(function(it){
+        var rc = it.el.getBoundingClientRect();
+        l = Math.min(l, (rc.left - br.left + board.scrollLeft)/z); t = Math.min(t, (rc.top - br.top + board.scrollTop)/z);
+        r = Math.max(r, (rc.right - br.left + board.scrollLeft)/z); b = Math.max(b, (rc.bottom - br.top + board.scrollTop)/z);
+      });
+      var sx = 0, sy = 0;
+      if(r > W) sx = W - r;
+      if(l + sx < 0) sx = -l;
+      if(b > H) sy = H - b;
+      if(t + sy < 0) sy = -t;
+      if(sx || sy) items.forEach(function(it){ it.n.x += sx; it.n.y += sy; place(it.n, it.el); });
+    }
     function end(){
       clearTimeout(longPressTimer);
       if(!tracking) return;
       tracking = false;
+      edgeStop();   // drops any temporary edge room; layoutBoard() below trims the board to the notes
       if(isDraggable) cardEl.classList.remove('dragging');
       if(selectionMode){
         if(groupDrag && moved){ persistNotes(); layoutBoard(); }
@@ -1333,7 +1409,7 @@
       longPressFired = false; moved = false; isDraggable = false; groupDrag = false; group = null;
     }
     cardEl.addEventListener('pointerup', end);
-    cardEl.addEventListener('pointercancel', function(){ clearTimeout(longPressTimer); cardEl.classList.remove('dragging'); isDraggable=false; groupDrag=false; tracking=false; });
+    cardEl.addEventListener('pointercancel', function(){ clearTimeout(longPressTimer); cardEl.classList.remove('dragging'); isDraggable=false; groupDrag=false; tracking=false; edgeStop(); layoutBoard(); });
   }
 
   function attachResize(handleEl, cardEl, note){
@@ -1436,32 +1512,119 @@
   }
 
   // ---------- ZOOM ----------
+  var ZOOM_MIN = 0.4, ZOOM_MAX = 2.2;
   var zoomBtn = document.getElementById('zoomBtn');
   var zoomSliderPop = document.getElementById('zoomSliderPop');
-  var zoomSlider = document.getElementById('zoomSlider');
+  var zoomSlider = document.getElementById('zoomSlider');   // custom vertical slider (div)
+  var zoomThumb = document.getElementById('zoomThumb');
+  var zoomTick = document.getElementById('zoomTick');
   var zoomOpen = false;
-  function setZoomOpen(v){ zoomOpen=v; zoomSliderPop.hidden = !v; zoomBtn.classList.toggle('active', v); }
-  zoomBtn.addEventListener('click', function(){
-    setZoomCentered(1);
-    setZoomOpen(!zoomOpen);
+  function setZoomOpen(v){ zoomOpen=v; zoomSliderPop.hidden = !v; zoomBtn.classList.toggle('active', v); if(v) syncZoomUI(); }
+
+  // slider is logarithmic so every step feels the same (zoom is multiplicative); top = zoom in
+  function zoomToT(z){ return Math.log(z/ZOOM_MIN) / Math.log(ZOOM_MAX/ZOOM_MIN); }
+  function tToZoom(t){ return ZOOM_MIN * Math.pow(ZOOM_MAX/ZOOM_MIN, t); }
+  function thumbTop(t){ return 'calc(12px + (100% - 24px) * ' + (1 - t) + ')'; }
+  function syncZoomUI(){
+    var z = boardZoom || 1;
+    document.getElementById('zoomPct').textContent = Math.round(z*100) + '%';
+    zoomThumb.style.top = thumbTop(zoomToT(z));
+    zoomTick.style.top = thumbTop(zoomToT(1));
+    zoomSlider.setAttribute('aria-valuenow', Math.round(z*100));
+  }
+
+  // Core: set the zoom keeping board point (contentX, contentY) — in unzoomed board px — under screen point (px, py) of the board viewport.
+  function zoomWithAnchor(newZoom, contentX, contentY, px, py){
+    newZoom = clamp(newZoom, ZOOM_MIN, ZOOM_MAX);
+    var lx = contentX - offX, ly = contentY - offY;   // logical point: survives the origin moving
+    boardZoom = newZoom;
+    applyZoom();
+    layoutBoard();
+    board.scrollLeft = (lx + offX) * newZoom - px;
+    board.scrollTop = (ly + offY) * newZoom - py;
+    syncZoomUI();
+    trackFreeView(); // always remember the zoom, even when the scroll position doesn't change
+  }
+  // zoom around a client point (cursor / pinch centre)
+  function setZoomAt(newZoom, clientX, clientY){
+    if(boardMode !== 'free'){ boardZoom = clamp(newZoom, ZOOM_MIN, ZOOM_MAX); return; }
+    var rect = board.getBoundingClientRect(), z = boardZoom || 1;
+    var px = clientX - rect.left, py = clientY - rect.top;
+    zoomWithAnchor(newZoom, (board.scrollLeft + px)/z, (board.scrollTop + py)/z, px, py);
+  }
+  // zoom around the centre of what is on screen
+  function setZoomCentered(newZoom){
+    var rect = board.getBoundingClientRect();
+    setZoomAt(newZoom, rect.left + board.clientWidth/2, rect.top + board.clientHeight/2);
+  }
+  // zoom out/in so every visible note fits on screen (never above 100%)
+  function fitAll(){
+    if(boardMode !== 'free') return;
+    var vw = board.clientWidth, vh = board.clientHeight;
+    var els = boardInner.querySelectorAll('.card[data-note-id]:not(.faded)');
+    if(!els.length){ zoomWithAnchor(1, offX, offY, vw/2, vh/2); return; }
+    var br = board.getBoundingClientRect(), z = boardZoom || 1;
+    var x1=Infinity, y1=Infinity, x2=-Infinity, y2=-Infinity;
+    Array.prototype.forEach.call(els, function(el){
+      var r = el.getBoundingClientRect();
+      x1 = Math.min(x1, (r.left - br.left + board.scrollLeft)/z); y1 = Math.min(y1, (r.top - br.top + board.scrollTop)/z);
+      x2 = Math.max(x2, (r.right - br.left + board.scrollLeft)/z); y2 = Math.max(y2, (r.bottom - br.top + board.scrollTop)/z);
+    });
+    var pad = 40, w = (x2 - x1) + 2*pad, h = (y2 - y1) + 2*pad;
+    zoomWithAnchor(Math.min(vw/w, vh/h, 1), (x1+x2)/2, (y1+y2)/2, vw/2, vh/2);
+  }
+
+  // button now only opens/closes the panel (it used to reset the zoom to 100% on every tap)
+  zoomBtn.addEventListener('click', function(){ setZoomOpen(!zoomOpen); });
+  document.getElementById('zoomPct').addEventListener('click', function(){ setZoomCentered(1); });
+  document.getElementById('zoomInBtn').addEventListener('click', function(){ setZoomCentered((boardZoom||1) * 1.25); });
+  document.getElementById('zoomOutBtn').addEventListener('click', function(){ setZoomCentered((boardZoom||1) / 1.25); });
+  document.getElementById('zoomFitBtn').addEventListener('click', fitAll);
+
+  // custom slider: drag the thumb or tap the track; snaps to 100%
+  var zoomDragging = false;
+  function zoomFromPointer(e){
+    var r = zoomSlider.getBoundingClientRect();
+    var t = 1 - clamp((e.clientY - r.top - 12) / (r.height - 24), 0, 1);
+    var z = tToZoom(t);
+    if(Math.abs(z - 1) < 0.03) z = 1;
+    setZoomCentered(z);
+  }
+  zoomSlider.addEventListener('pointerdown', function(e){
+    zoomDragging = true;
+    try{ zoomSlider.setPointerCapture(e.pointerId); }catch(err){}
+    zoomFromPointer(e); e.preventDefault();
   });
-  zoomSlider.addEventListener('input', function(){ setZoomCentered(Number(zoomSlider.value)/100); });
+  zoomSlider.addEventListener('pointermove', function(e){ if(zoomDragging) zoomFromPointer(e); });
+  function zoomDragEnd(){ zoomDragging = false; }
+  zoomSlider.addEventListener('pointerup', zoomDragEnd);
+  zoomSlider.addEventListener('pointercancel', zoomDragEnd);
+  zoomSlider.addEventListener('keydown', function(e){
+    var z = boardZoom || 1;
+    if(e.key === 'ArrowUp' || e.key === 'ArrowRight' || e.key === '+'){ setZoomCentered(z * 1.1); e.preventDefault(); }
+    else if(e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === '-'){ setZoomCentered(z / 1.1); e.preventDefault(); }
+    else if(e.key === '0'){ setZoomCentered(1); e.preventDefault(); }
+  });
+  syncZoomUI();
+
   document.addEventListener('pointerdown', function(e){
     if(!zoomOpen) return;
     if(zoomSliderPop.contains(e.target) || zoomBtn.contains(e.target)) return;
     setZoomOpen(false);
   });
 
+  // Ctrl/Cmd + wheel (and trackpad pinch): zoom towards the cursor
   board.addEventListener('wheel', function(e){
     if(boardMode !== 'free') return;
     if(e.ctrlKey || e.metaKey){
       e.preventDefault();
-      setZoomCentered(boardZoom - e.deltaY * 0.0025);
+      setZoomAt((boardZoom||1) * Math.exp(-e.deltaY * 0.0025), e.clientX, e.clientY);
     }
   }, {passive:false});
 
+  // two-finger pinch: zooms around the point between the fingers and follows them while pinching
   var activePointers = {};
-  var pinchStartDist = null, pinchStartZoom = 1;
+  var pinch = null;
   board.addEventListener('pointerdown', function(e){ if(boardMode==='free') activePointers[e.pointerId] = {x:e.clientX,y:e.clientY}; });
   board.addEventListener('pointermove', function(e){
     if(boardMode !== 'free' || !activePointers[e.pointerId]) return;
@@ -1469,12 +1632,17 @@
     var ids = Object.keys(activePointers);
     if(ids.length === 2){
       var p0 = activePointers[ids[0]], p1 = activePointers[ids[1]];
-      var dist = Math.hypot(p0.x-p1.x, p0.y-p1.y);
-      if(pinchStartDist === null){ pinchStartDist = dist; pinchStartZoom = boardZoom; }
-      else { setZoomCentered(pinchStartZoom * (dist/pinchStartDist)); }
+      var dist = Math.hypot(p0.x-p1.x, p0.y-p1.y) || 1;
+      var mx = (p0.x+p1.x)/2, my = (p0.y+p1.y)/2;
+      var rect = board.getBoundingClientRect(), z = boardZoom || 1;
+      if(!pinch){
+        pinch = { dist:dist, zoom:z, bx:(board.scrollLeft + mx - rect.left)/z - offX, by:(board.scrollTop + my - rect.top)/z - offY };
+      } else {
+        zoomWithAnchor(pinch.zoom * (dist/pinch.dist), pinch.bx + offX, pinch.by + offY, mx - rect.left, my - rect.top);
+      }
     }
   });
-  function clearPointer(e){ delete activePointers[e.pointerId]; if(Object.keys(activePointers).length < 2) pinchStartDist = null; }
+  function clearPointer(e){ delete activePointers[e.pointerId]; if(Object.keys(activePointers).length < 2) pinch = null; }
   board.addEventListener('pointerup', clearPointer);
   board.addEventListener('pointercancel', clearPointer);
 
@@ -1512,7 +1680,7 @@
         var sz = s.zoom || 1;
         var sox = typeof s.ox === 'number' ? s.ox : BOARD_OFFSET;
         var soy = typeof s.oy === 'number' ? s.oy : BOARD_OFFSET;
-        boardZoom = sz; zoomSlider.value = Math.round(boardZoom*100); document.getElementById('zoomPct').textContent = Math.round(boardZoom*100)+'%'; applyZoom();
+        boardZoom = sz; applyZoom(); syncZoomUI(); layoutBoard();
         board.scrollLeft = (s.scrollLeft/sz - sox + offX) * sz;
         board.scrollTop = (s.scrollTop/sz - soy + offY) * sz;
       }
@@ -1959,7 +2127,6 @@
   var photoEditorInner = document.getElementById('photoEditorInner');
   var audioEditorInner = document.getElementById('audioEditorInner');
   var linkEditorInner = document.getElementById('linkEditorInner');
-  var noteToolbarGroup = document.getElementById('noteToolbarGroup');
   var lockBtn = document.getElementById('lockBtn');
 
   var titleInput = document.getElementById('titleInput');
@@ -2058,7 +2225,7 @@
     photoEditorInner.hidden = kind !== 'photo';
     audioEditorInner.hidden = kind !== 'audio';
     linkEditorInner.hidden = kind !== 'link';
-    noteToolbarGroup.style.display = kind === 'note' ? '' : 'none';
+    if(kind !== 'note') setTextTools(false);
   }
 
   function currentNavList(){
@@ -2071,7 +2238,7 @@
     openNoteId = id;
     hideSourceCard(id);
     stopRecordingIfActive();
-    document.getElementById('formatPopover').hidden = true; formatToggleBtn.classList.remove('open');
+    setTextTools(false);
     setFolderPickOpen(false);
     applyEditorColor(note);
     renderSwatches(note);
@@ -2183,29 +2350,57 @@
     else if(mod && e.altKey && e.key==='2'){ e.preventDefault(); document.execCommand('formatBlock', false, 'H2'); }
   });
 
-  var formatToggleBtn = document.getElementById('formatToggleBtn');
-  var formatPopover = document.getElementById('formatPopover');
-  function placeAbove(btn, pop){
-    var r = btn.getBoundingClientRect();
-    pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 210)) + 'px';
-    pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
-    pop.style.top = 'auto';
+  // ---------- TEXT TOOLS BAR ----------
+  // Visible only while the cursor is in a note's body. On touch devices it sits right above the on-screen
+  // keyboard and disappears when the keyboard closes; on desktop it sits above the editor's bottom bar.
+  var textTools = document.getElementById('textToolsBar');
+  var editorScrollEl = document.querySelector('#editorPage .editor-scroll');
+  var editorBottombarEl = document.getElementById('editorBottombar');
+  var vv = window.visualViewport || null;
+  var coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  var kbBase = vv ? vv.height : window.innerHeight;   // visible height with no keyboard
+  var toolsWanted = false;
+  function isEditing(){
+    var ae = document.activeElement;
+    return !!ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA');
   }
-  function setFormatMenu(open){
-    formatPopover.hidden = !open;
-    formatToggleBtn.classList.toggle('open', open);
-    if(open) placeAbove(formatToggleBtn, formatPopover);
+  function keyboardOpen(){ return vv ? (kbBase - vv.height > 140) : true; }
+  function updateTextTools(){
+    if(vv && !isEditing()) kbBase = vv.height;        // only learn the "no keyboard" height while nothing is being typed
+    var show = toolsWanted && (!coarsePointer || keyboardOpen());
+    textTools.hidden = !show;
+    if(!show){ editorScrollEl.style.paddingBottom = ''; return; }
+    // bottom offset: gap between the layout viewport and the visible one (= keyboard height) on touch; bottom bar height on desktop
+    var bottom = coarsePointer ? (vv ? Math.max(0, window.innerHeight - vv.offsetTop - vv.height) : 0) : editorBottombarEl.offsetHeight;
+    textTools.style.bottom = Math.round(bottom) + 'px';
+    editorScrollEl.style.paddingBottom = Math.round((coarsePointer ? bottom : 0) + textTools.offsetHeight + 10) + 'px';
+    keepCaretAboveTools();
   }
-  formatToggleBtn.addEventListener('click', function(){ setFormatMenu(formatPopover.hidden); });
-  formatPopover.addEventListener('mousedown', function(e){ e.preventDefault(); });
-  formatPopover.addEventListener('click', function(){ setTimeout(function(){ setFormatMenu(false); }, 0); });
-  document.addEventListener('pointerdown', function(e){
-    if(formatPopover.hidden) return;
-    if(formatPopover.contains(e.target) || formatToggleBtn.contains(e.target)) return;
-    setFormatMenu(false);
-  });
+  function setTextTools(on){ toolsWanted = on; updateTextTools(); }
+  // keep the line being typed from hiding behind the bar
+  function keepCaretAboveTools(){
+    if(textTools.hidden) return;
+    var sel = window.getSelection();
+    if(!sel || !sel.rangeCount || !bodyEl.contains(sel.anchorNode)) return;
+    var rect = null;
+    try{ var r = sel.getRangeAt(0).cloneRange(); r.collapse(false); var rs = r.getClientRects(); rect = rs.length ? rs[0] : null; }catch(err){}
+    if(!rect || !rect.height){
+      var node = sel.anchorNode, el = node && (node.nodeType === 1 ? node : node.parentElement);
+      if(!el || el === bodyEl) return;
+      rect = el.getBoundingClientRect();
+    }
+    if(rect.height > 200) return;
+    var limit = textTools.getBoundingClientRect().top - 10;
+    if(rect.bottom > limit) editorScrollEl.scrollTop += rect.bottom - limit;
+  }
+  bodyEl.addEventListener('focus', function(){ var n = getNote(openNoteId); setTextTools(!!n && n.kind === 'note'); });
+  bodyEl.addEventListener('blur', function(){ setTimeout(function(){ if(document.activeElement !== bodyEl) setTextTools(false); }, 60); });
+  if(vv){ vv.addEventListener('resize', updateTextTools); vv.addEventListener('scroll', updateTextTools); }
+  window.addEventListener('resize', updateTextTools);
+  document.addEventListener('selectionchange', keepCaretAboveTools);
+  textTools.addEventListener('mousedown', function(e){ e.preventDefault(); });   // tapping a tool keeps the cursor and the keyboard
 
-  Array.prototype.forEach.call(document.querySelectorAll('#formatPopover [data-cmd]'), function(btn){
+  Array.prototype.forEach.call(document.querySelectorAll('#textToolsBar [data-cmd]'), function(btn){
     btn.addEventListener('mousedown', function(e){ e.preventDefault(); });
     btn.addEventListener('click', function(){
       var note = getNote(openNoteId); if(!note) return;
