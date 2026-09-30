@@ -24,6 +24,10 @@
     --card-sky-bg:#DCEAF4;   --card-sky-text:#1C2C36;   --card-sky-border:#C7DDEE;
     --card-dark-bg:#1E1D1B;  --card-dark-text:#F1EEE6;  --card-dark-border:#1E1D1B;
 
+    --hover:#5b6cff;   /* hover colour for the dark round buttons (the app's --accent is near-black, so it can't show a hover) */
+    --float-sh:0 30px 60px -20px rgba(40,50,90,.35), 0 8px 20px -8px rgba(40,50,90,.18);
+    --ease:cubic-bezier(.2,.8,.2,1);
+
     color-scheme: light;
   }
   body.dark{
@@ -44,6 +48,7 @@
     --card-lime-bg:#39420E;  --card-lime-text:#E9F99C;  --card-lime-border:#4B5714;
     --card-sky-bg:#1E2F38;  --card-sky-text:#CEE6F3;   --card-sky-border:#294049;
     --card-dark-bg:#F1EEE6; --card-dark-text:#1E1D1B;  --card-dark-border:#F1EEE6;
+    --float-sh:0 30px 60px -20px rgba(0,0,0,.7);
     color-scheme: dark;
   }
   *{box-sizing:border-box;}
@@ -81,38 +86,49 @@
   @media (min-width:700px){ .board-inner.mode-masonry{ gap:18px; padding:72px 22px 110px 22px; } .masonry-col{ gap:18px; } }
 
   .card{
-    border-radius:18px;
-    border:1px solid var(--card-paper-border);
-    background:var(--card-paper-bg);
-    color:var(--card-paper-text);
-    box-shadow:0 2px 4px rgba(20,18,14,0.07), 0 14px 30px -14px rgba(20,18,14,0.32);
+    --cbg:var(--card-paper-bg); --ctext:var(--card-paper-text); --cborder:var(--card-paper-border);
+    border-radius:24px;
+    background:none; border:0;
+    color:var(--ctext);
     display:flex; flex-direction:column;
     overflow:visible;
     user-select:none;
     cursor:pointer;
-    transition:box-shadow 0.15s ease, transform 0.15s ease;
+    transition:opacity 0.3s ease;   /* NOT transform: in free mode the card's transform holds its position + rotation */
     max-width:100%;
     position:relative;
   }
-  .card-clip{ overflow:hidden; border-radius:inherit; display:flex; flex-direction:column; flex:1; min-height:0; width:100%; height:100%; background:inherit; }
+  /* the visible "paper" lives on .card-clip so it can float/lift without touching the card's own transform */
+  .card-clip{
+    overflow:hidden; border-radius:inherit; display:flex; flex-direction:column; flex:1; min-height:0; width:100%; height:100%;
+    background:var(--cbg); border:1px solid var(--cborder); box-shadow:var(--float-sh);
+    animation:card-float 6s ease-in-out infinite;
+    transition:translate 0.35s var(--ease), rotate 0.35s var(--ease), scale 0.35s var(--ease), box-shadow 0.35s ease;
+  }
+  @keyframes card-float{ 50%{ transform:translateY(-8px) rotate(0.4deg); } }
   /* unselected cards let a finger swipe scroll the board; only the selected (movable) card captures the touch to be dragged */
   .mode-free .card{ position:absolute; touch-action:pan-x pan-y; cursor:grab; }
   .mode-free .card.movable{ touch-action:none; }
   .mode-masonry .card{ touch-action:pan-y; width:100%; align-self:start; animation:card-in 0.2s ease both; }
   @keyframes card-in{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
-  .card:hover{ box-shadow:0 2px 4px rgba(20,18,14,0.09), 0 20px 36px -14px rgba(20,18,14,0.38); }
-  .mode-masonry .card:hover{ transform:translateY(-2px); }
-  .card.dragging, .card.resizing, .card.rotating{ cursor:grabbing; box-shadow:0 22px 44px -16px rgba(20,18,14,0.42); transition:none; z-index:9999 !important; }
-  .card.color-pink{ background:var(--card-pink-bg); color:var(--card-pink-text); border-color:var(--card-pink-border); }
-  .card.color-lime{ background:var(--card-lime-bg); color:var(--card-lime-text); border-color:var(--card-lime-border); }
-  .card.color-sky{  background:var(--card-sky-bg);  color:var(--card-sky-text);  border-color:var(--card-sky-border); }
-  .card.color-dark{ background:var(--card-dark-bg); color:var(--card-dark-text); border-color:var(--card-dark-border); box-shadow:0 2px 4px rgba(0,0,0,0.32), 0 14px 28px -14px rgba(0,0,0,0.55); }
+  .card:hover .card-clip{ translate:0 -6px; rotate:-0.6deg; scale:1.03; animation-play-state:paused; }
+  .card.dragging, .card.resizing, .card.rotating{ cursor:grabbing; transition:none; z-index:9999 !important; }
+  .card.dragging .card-clip, .card.resizing .card-clip, .card.rotating .card-clip{ box-shadow:0 22px 44px -16px rgba(20,18,14,0.42); }
+  /* no floating while dragging / resizing / rotating, while selected for moving, or in selection mode */
+  .card.dragging .card-clip, .card.resizing .card-clip, .card.rotating .card-clip, .card.card-active .card-clip, body.selecting .card .card-clip{
+    animation:none; translate:none; rotate:none; scale:none;
+  }
+  .card.color-pink{ --cbg:var(--card-pink-bg); --ctext:var(--card-pink-text); --cborder:var(--card-pink-border); }
+  .card.color-lime{ --cbg:var(--card-lime-bg); --ctext:var(--card-lime-text); --cborder:var(--card-lime-border); }
+  .card.color-sky{  --cbg:var(--card-sky-bg);  --ctext:var(--card-sky-text);  --cborder:var(--card-sky-border); }
+  .card.color-dark{ --cbg:var(--card-dark-bg); --ctext:var(--card-dark-text); --cborder:var(--card-dark-border); }
   .card.faded{ opacity:0.22; pointer-events:none; }
   .card.select-dim{ opacity:0.5; }
   .card.selected{ outline:2.5px solid var(--accent); outline-offset:2px; }
+  @media (prefers-reduced-motion:reduce){ .card-clip{ animation:none; } }
 
   .card-swipe-wrap{ position:relative; width:100%; height:100%; display:flex; flex-direction:column; flex:1; min-height:0; background:inherit; }
-  .card-delete-reveal{ opacity:0; position:absolute; inset:0; background:var(--danger); color:#fff; display:flex; align-items:center; justify-content:flex-end; padding-right:18px; font-size:13px; font-weight:600; border-radius:18px; z-index:0; }
+  .card-delete-reveal{ opacity:0; position:absolute; inset:0; background:var(--danger); color:#fff; display:flex; align-items:center; justify-content:flex-end; padding-right:18px; font-size:13px; font-weight:600; border-radius:24px; z-index:0; }
   .card-inner{ position:relative; background:inherit; display:flex; flex-direction:column; flex:1; min-height:0; border-radius:inherit; transition:none; z-index:1; }
 
   .card-img{ width:100%; height:92px; flex-shrink:0; background-size:cover; background-position:center; }
@@ -132,7 +148,6 @@
   .card.sized .quick-text{ -webkit-line-clamp:6; }
   .quick-text.untitled{ opacity:0.45; font-style:italic; font-weight:400; }
 
-  .card.color-paper.kind-note, .card.color-paper.kind-quick{ border-radius:18px; box-shadow:0 1px 1px rgba(20,18,14,0.08), 0 10px 20px -12px rgba(20,18,14,0.28), 0 1px 0 rgba(20,18,14,0.04); }
   .card.color-paper.kind-note .card-title{ font-size:15.5px; }
   .card.color-paper.kind-note .card-snippet{ font-size:13px; line-height:1.6; opacity:0.72; }
   .mode-masonry .card.color-paper.kind-note .card-snippet{ font-size:13.5px; }
@@ -251,32 +266,45 @@
   body.selecting .fab-cluster, body.selecting .zoom-wrap, body.selecting .scenes-wrap{ display:none; }
   .selection-bar .sel-done{ background:none; color:inherit; opacity:0.75; width:34px; height:34px; padding:0; display:flex; align-items:center; justify-content:center; }
 
-  /* ---------------- FULLSCREEN EDITOR ---------------- */
-  .editor-page{ position:fixed; inset:0; z-index:200; display:flex; flex-direction:column; overflow:hidden; transition:opacity 0.16s ease, transform 0.16s ease, background-color 0.2s ease, color 0.2s ease; opacity:1; transform:translateX(0); }
-  .editor-page[hidden]{ display:none; }
-  .editor-page.anim-enter{ opacity:0; }
-  .editor-page{ backdrop-filter:blur(38px) saturate(1.15); -webkit-backdrop-filter:blur(38px) saturate(1.15); }
-  .editor-page.color-paper{ background:rgba(251,250,246,0.86); color:var(--card-paper-text); }
-  .editor-page.color-pink{ background:rgba(245,217,223,0.86); color:var(--card-pink-text); }
-  .editor-page.color-lime{ background:rgba(226,250,92,0.82); color:var(--card-lime-text); }
-  .editor-page.color-sky{ background:rgba(220,234,244,0.86); color:var(--card-sky-text); }
-  .editor-page.color-dark{ background:rgba(30,29,27,0.86); color:var(--card-dark-text); }
-  body.dark .editor-page.color-paper{ background:rgba(38,36,31,0.86); }
-  body.dark .editor-page.color-pink{ background:rgba(58,40,48,0.86); }
-  body.dark .editor-page.color-lime{ background:rgba(57,66,14,0.82); }
-  body.dark .editor-page.color-sky{ background:rgba(30,47,56,0.86); }
-  body.dark .editor-page.color-dark{ background:rgba(241,238,230,0.86); }
+  /* ---------------- FLOATING WINDOW (shared by every item type) ---------------- */
+  .fw-overlay{ position:fixed; inset:0; z-index:200; background:rgba(20,22,35,0.25); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); opacity:0; pointer-events:none; transition:opacity 0.35s ease; }
+  .fw-overlay.on{ opacity:1; pointer-events:auto; }
+  body.dark .fw-overlay{ background:rgba(0,0,0,0.38); }
+  .fwin{
+    --fw-bg:var(--card-paper-bg); --fw-ink:var(--card-paper-text); --fw-border:var(--card-paper-border);
+    --fw-mute:rgba(128,128,128,0.85); --fw-line:rgba(128,128,128,0.28); --fw-soft:rgba(128,128,128,0.14);
+    position:fixed; left:0; top:0; width:0; height:0; z-index:210;
+    background:var(--fw-bg); color:var(--fw-ink); border:1px solid var(--fw-border);
+    border-radius:28px; box-shadow:var(--float-sh); overflow:hidden;
+    visibility:hidden; opacity:0; pointer-events:none;
+    transition:left 0.5s var(--ease), top 0.5s var(--ease), width 0.5s var(--ease), height 0.5s var(--ease), opacity 0.2s ease 0.3s;
+  }
+  @supports (color: color-mix(in srgb, red, blue)){
+    .fwin{ --fw-mute:color-mix(in srgb, var(--fw-ink) 62%, transparent); --fw-line:color-mix(in srgb, var(--fw-ink) 18%, transparent); --fw-soft:color-mix(in srgb, var(--fw-ink) 9%, transparent); }
+  }
+  .fwin.vis{ visibility:visible; }
+  .fwin.on{ opacity:1; pointer-events:auto; transition:left 0.5s var(--ease), top 0.5s var(--ease), width 0.5s var(--ease), height 0.5s var(--ease), opacity 0.12s ease; }
+  .fwin.color-pink{ --fw-bg:var(--card-pink-bg); --fw-ink:var(--card-pink-text); --fw-border:var(--card-pink-border); }
+  .fwin.color-lime{ --fw-bg:var(--card-lime-bg); --fw-ink:var(--card-lime-text); --fw-border:var(--card-lime-border); }
+  .fwin.color-sky{  --fw-bg:var(--card-sky-bg);  --fw-ink:var(--card-sky-text);  --fw-border:var(--card-sky-border); }
+  .fwin.color-dark{ --fw-bg:var(--card-dark-bg); --fw-ink:var(--card-dark-text); --fw-border:var(--card-dark-border); }
+  .fw-in{ height:100%; display:flex; flex-direction:column; min-height:0; opacity:0; transform:translateY(14px); transition:opacity 0.45s ease 0.2s, transform 0.45s var(--ease) 0.2s; }
+  .fwin.on .fw-in{ opacity:1; transform:none; }
+  .fw-x{ position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:50%; border:0; background:var(--fw-soft); color:inherit; display:flex; align-items:center; justify-content:center; z-index:6; padding:0; transition:background 0.2s ease, color 0.2s ease, transform 0.25s var(--ease); }
+  .fw-x:hover{ background:var(--hover); color:#fff; transform:rotate(90deg); }
+  #safeProbe{ position:fixed; left:0; top:0; width:0; height:0; visibility:hidden; pointer-events:none; padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px); }
 
-  .editor-scroll{ flex:1; overflow-y:auto; display:flex; justify-content:center; padding-top:env(safe-area-inset-top,0px); }
-  .editor-inner{ width:100%; max-width:660px; padding:22px 30px 20px 30px; }
-  .editor-inner.narrow{ max-width:min(640px,94vw); }
-  .editor-inner.photo-mode{ max-width:min(900px,96vw); display:flex; flex-direction:column; align-items:center; }
-  .editor-inner.audio-mode, .editor-inner.link-mode{ max-width:420px; }
+  .editor-scroll{ flex:1; min-height:0; overflow-y:auto; display:flex; justify-content:center; scrollbar-width:none; -ms-overflow-style:none; overscroll-behavior:contain; }
+  .editor-scroll::-webkit-scrollbar{ display:none; }
+  .editor-inner{ width:100%; max-width:none; padding:26px 30px 20px 30px; }
+  .editor-inner.narrow{ max-width:none; }
+  .editor-inner.photo-mode{ max-width:none; display:flex; flex-direction:column; align-items:center; }
+  .editor-inner.audio-mode, .editor-inner.link-mode{ max-width:none; }
   .editor-inner[hidden]{ display:none !important; }
 
-  .note-title-input{ width:100%; border:none; outline:none; background:transparent; font-size:26px; font-weight:700; letter-spacing:-0.02em; color:inherit; margin-bottom:10px; }
+  .note-title-input{ width:100%; border:none; outline:none; background:transparent; font-size:26px; font-weight:700; letter-spacing:-0.02em; color:inherit; margin-bottom:10px; padding-right:40px; }
   .note-title-input::placeholder{ color:currentColor; opacity:0.35; }
-  .note-body{ outline:none; font-size:15.5px; line-height:1.7; color:inherit; min-height:calc(100vh - 280px); }
+  .note-body{ outline:none; font-size:15.5px; line-height:1.7; color:inherit; min-height:220px; }
   .note-body h1{ font-size:22px; font-weight:700; margin:1.1em 0 0.4em 0; }
   .note-body h2{ font-size:18px; font-weight:700; margin:1em 0 0.4em 0; }
   .note-body ul{ padding-left:1.3em; margin:0.6em 0; }
@@ -285,10 +313,10 @@
   .note-body audio{ width:100%; display:block; }
   .note-body :empty:before{ content:attr(data-placeholder); color:currentColor; opacity:0.35; }
 
-  .quick-input{ width:100%; height:100%; border:none; outline:none; background:transparent; resize:none; font-size:21px; font-weight:500; line-height:1.5; color:inherit; font-family:inherit; min-height:calc(100vh - 220px); }
+  .quick-input{ width:100%; height:100%; border:none; outline:none; background:transparent; resize:none; font-size:21px; font-weight:500; line-height:1.5; color:inherit; font-family:inherit; min-height:200px; }
   .quick-input::placeholder{ color:currentColor; opacity:0.35; }
 
-  .photo-display{ width:auto; height:auto; max-width:100%; max-height:66vh; display:block; border-radius:26px; margin-bottom:18px; box-shadow:0 20px 50px -18px rgba(0,0,0,0.4); }
+  .photo-display{ width:auto; height:auto; max-width:100%; max-height:min(46vh,420px); display:block; border-radius:26px; margin-bottom:18px; box-shadow:0 20px 50px -18px rgba(0,0,0,0.4); }
   .photo-caption-input{ width:100%; border:none; outline:none; background:transparent; font-size:16px; text-align:center; color:inherit; font-weight:600; }
   .photo-caption-input::placeholder{ color:currentColor; opacity:0.4; }
 
@@ -312,7 +340,8 @@
   .link-icon-big svg{ position:relative; }
 
   /* bottom chrome bar for the editor */
-  .editor-bottombar{ flex-shrink:0; display:flex; align-items:center; gap:4px; padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px)) 14px; overflow-x:auto; }
+  .editor-bottombar{ flex-shrink:0; display:flex; align-items:center; gap:4px; padding:8px 14px 10px 14px; overflow-x:auto; border-top:1px solid var(--fw-line); transition:opacity 0.15s ease; }
+  .editor-bottombar.tools-cover{ opacity:0; pointer-events:none; }
   .editor-bottombar::-webkit-scrollbar{ display:none; }
   .etb-btn{ background:none; border:none; color:inherit; width:36px;height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; opacity:0.75; transition:background 0.12s ease, opacity 0.12s ease; flex-shrink:0; }
   .etb-btn:hover{ opacity:1; background:rgba(0,0,0,0.07); }
@@ -350,7 +379,7 @@
   .editor-menu{ position:fixed; z-index:260; background:var(--surface); color:var(--ink); border:1px solid var(--border); border-radius:14px; box-shadow:0 16px 34px -14px rgba(20,18,14,0.35); padding:6px; display:flex; flex-direction:column; gap:2px; min-width:190px; animation:menu-in 0.14s ease; }
   .editor-menu[hidden]{ display:none; }
   /* text tools bar */
-  .text-tools{ position:absolute; left:50%; bottom:0; transform:translateX(-50%); width:calc(100% - 16px); max-width:440px; z-index:240; display:flex; align-items:center; justify-content:space-around; gap:2px; padding:5px 6px; background:var(--surface); color:var(--ink); border:1px solid var(--border); border-radius:16px; box-shadow:0 12px 30px -12px rgba(20,18,14,0.4); }
+  .text-tools{ position:fixed; left:50%; bottom:0; transform:translateX(-50%); width:calc(100% - 16px); max-width:440px; z-index:230; display:flex; align-items:center; justify-content:space-around; gap:2px; padding:5px 6px; background:var(--surface); color:var(--ink); border:1px solid var(--border); border-radius:16px; box-shadow:0 12px 30px -12px rgba(20,18,14,0.4); }
   .text-tools[hidden]{ display:none; }
   .text-tools:not([hidden]){ animation:textToolsIn 0.14s ease-out; }
   @keyframes textToolsIn{ from{ opacity:0; transform:translate(-50%,6px); } to{ opacity:1; transform:translate(-50%,0); } }
@@ -409,7 +438,6 @@
     .fab-cluster{ bottom:var(--phone-bottom); }
     .zoom-wrap, .scenes-wrap{ bottom:calc(var(--phone-bottom) + 8px); }
     .selection-bar{ bottom:var(--phone-bottom); }
-    .editor-bottombar{ padding-bottom:calc(var(--phone-bottom) + 2px); }
   }
 </style>
 </head>
@@ -526,8 +554,13 @@
     </div>
   </div>
 
-  <!-- FULLSCREEN EDITOR -->
-  <div class="editor-page" id="editorPage" hidden>
+  <!-- FLOATING WINDOW (shared by every item type: opens from its own card, FLIP) -->
+  <div class="fw-overlay" id="fwOverlay"></div>
+  <div class="fwin" id="editorPage" role="dialog" aria-modal="true">
+    <button class="fw-x" id="closeBtn" title="Close" aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="fw-in" id="fwIn">
     <div class="editor-scroll">
       <!-- NOTE editor -->
       <div class="editor-inner" id="noteEditorInner">
@@ -577,10 +610,6 @@
 
     <!-- BOTTOM CHROME -->
     <div class="editor-bottombar" id="editorBottombar">
-      <button class="etb-btn" id="closeBtn" title="Close">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <div class="etb-sep"></div>
 
       <input type="file" id="imageInput" accept="image/*,.gif" hidden>
       <input type="file" id="noteAudioInput" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" hidden>
@@ -604,6 +633,8 @@
       <div class="etb-flex-spacer"></div>
       <span class="save-indicator" id="saveIndicator" style="font-size:11px; opacity:0;">Saved</span>
     </div>
+    </div><!-- /fw-in -->
+  </div><!-- /floating window -->
     <!-- TEXT TOOLS: only while typing in a note. Bar under the text; on phones it rides on top of the keyboard. -->
     <div class="text-tools" id="textToolsBar" hidden>
       <button data-cmd="bold" title="Bold"><span class="fm-icon"><strong style="font-size:14px;">B</strong></span></button>
@@ -617,7 +648,7 @@
       <button id="drawBtn" title="Draw"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span></button>
     </div>
 
-  </div>
+  <div id="safeProbe" aria-hidden="true"></div>
 
   <!-- FULL PHOTO VIEWER -->
   <div class="photo-viewer" id="photoViewer" hidden>
@@ -680,6 +711,7 @@
   var scenes = [];
   var selectedFolder = 'all';
   var openNoteId = null;
+  var fwOpen = false, fwCloseTimer = null, fwBox = null, fwDirty = false, fwOpenedAt = 0;   // floating window state
   var zTop = 10;
   var saveTimer = null;
   var pendingDeleteNoteId = null;
@@ -1119,6 +1151,7 @@
       var innerHTML = n.kind === 'photo' ? photoInnerHTML(n) : cardBodyHTML(n);
       var clip = document.createElement('div');
       clip.className = 'card-clip';
+      clip.style.animationDelay = '-' + (((parseInt(String(n.id).slice(-3), 36) || 0) % 60) / 10) + 's';
       clip.innerHTML = boardMode === 'masonry'
         ? '<div class="card-swipe-wrap"><div class="card-delete-reveal">Delete</div><div class="card-inner">'+innerHTML+'</div></div>'
         : innerHTML;
@@ -1253,10 +1286,24 @@
     if(boardMode === 'masonry' && masonryColCount() !== masonryCols) scheduleRelayout();
   });
 
+  // the card an open window came from stays in the DOM with opacity:0 (so its rect can still be measured)
   function hideSourceCard(id){
     Array.prototype.forEach.call(boardInner.querySelectorAll('.card[data-note-id]'), function(el){
-      el.style.visibility = el.getAttribute('data-note-id') === id ? 'hidden' : '';
+      if(id && el.getAttribute('data-note-id') === id){ el.style.transition = 'none'; el.style.opacity = '0'; }
+      else { el.style.opacity = ''; }
     });
+  }
+  function findCard(id){ return boardInner.querySelector('.card[data-note-id="'+id+'"]'); }
+  // live preview: repaint just one card (used while its window is open) instead of rebuilding the whole board
+  function refreshCard(n){
+    var el = findCard(n.id); if(!el) return;
+    var clip = el.querySelector('.card-clip'); if(!clip) return;
+    var html = n.kind === 'photo' ? photoInnerHTML(n) : cardBodyHTML(n);
+    var swipe = clip.querySelector('.card-inner');
+    (swipe || clip).innerHTML = html;
+    COLORS.forEach(function(c){ el.classList.remove('color-'+c); });
+    el.classList.add('color-' + n.color);
+    wireAudioPlayButton(el, n); wireLinkOpen(el, n);
   }
 
   function attachMasonryDrag(cardEl, note){
@@ -2099,7 +2146,7 @@
     var imageItem = null;
     for(var i=0;i<items.length;i++){ if(items[i].type && items[i].type.indexOf('image') === 0){ imageItem = items[i]; break; } }
     if(!imageItem){
-      if(editorPage.hidden && !fabMenuOpen){
+      if(!fwOpen && !fabMenuOpen){
         var ae = document.activeElement;
         var typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
         if(!typing){
@@ -2113,9 +2160,9 @@
     if(!file) return;
     e.preventDefault();
     var editingNote = openNoteId ? getNote(openNoteId) : null;
-    if(editingNote && editingNote.kind === 'note' && !editorPage.hidden){
+    if(editingNote && editingNote.kind === 'note' && fwOpen){
       readImageSmart(file, function(dataUrl){ insertInlineImage(dataUrl); });
-    } else if(editorPage.hidden){
+    } else if(!fwOpen){
       readImageSmart(file, function(dataUrl){ createPhotoFromDataUrl(dataUrl); });
     }
   });
@@ -2154,7 +2201,8 @@
   }
 
   function applyEditorColor(note){
-    editorPage.className = 'editor-page color-' + note.color;
+    COLORS.forEach(function(c){ editorPage.classList.remove('color-'+c); });
+    editorPage.classList.add('color-' + note.color);
   }
 
   function renderSwatches(note){
@@ -2263,51 +2311,125 @@
     }
   }
 
+  // ---------- FLOATING WINDOW: one FLIP open/close mechanism for every item type ----------
+  var fwOverlay = document.getElementById('fwOverlay');
+  var safeProbe = document.getElementById('safeProbe');
+  var fwIn = document.getElementById('fwIn');
+  var FW_MAX = { note:{w:680,h:9999}, quick:{w:680,h:520}, audio:{w:460,h:440}, link:{w:460,h:420}, photo:{w:720,h:680}, folder:{w:780,h:600} };
+  // final size + position: capped per kind, limited by the visible screen (keyboard-aware via visualViewport) and the safe areas
+  function fwTargetBox(kind){
+    var m = FW_MAX[kind] || FW_MAX.note, cs = getComputedStyle(safeProbe);
+    var st = parseFloat(cs.paddingTop)||0, sr = parseFloat(cs.paddingRight)||0, sb = parseFloat(cs.paddingBottom)||0, sl = parseFloat(cs.paddingLeft)||0;
+    var vw = vv ? vv.width : window.innerWidth, vh = vv ? vv.height : window.innerHeight;
+    var ox = vv ? vv.offsetLeft : 0, oy = vv ? vv.offsetTop : 0;
+    var mg = window.innerWidth < 600 ? 12 : 32;
+    var w = Math.max(240, Math.min(m.w, vw - sl - sr - mg*2)), h = Math.max(200, Math.min(m.h, vh - st - sb - mg*2));
+    return { w:w, h:h, l: ox + sl + (vw - sl - sr - w)/2, t: oy + st + (vh - st - sb - h)/2 };
+  }
+  function fwPlace(b){
+    editorPage.style.left = b.l + 'px'; editorPage.style.top = b.t + 'px';
+    editorPage.style.width = b.w + 'px'; editorPage.style.height = b.h + 'px';
+  }
+  function fwRefit(){   // screen/keyboard changed while open: re-fit without animating
+    if(!fwOpen) return;
+    var n = getNote(openNoteId); if(!n) return;
+    fwBox = fwTargetBox(n.kind);
+    editorPage.style.transition = 'none'; fwPlace(fwBox); void editorPage.offsetWidth; editorPage.style.transition = '';
+  }
+  function fwFinishClose(){
+    fwCloseTimer = null;
+    editorPage.classList.remove('vis','on');
+    editorPage.style.transition = ''; editorPage.style.opacity = '';
+    openNoteId = null;
+    hideSourceCard(null);
+    if(fwDirty){ fwDirty = false; renderAll(); }
+  }
   function openEditor(id){
     var note = getNote(id);
     if(!note) return;
-    loadNoteIntoEditor(id);
-    editorPage.hidden = false;
-    editorPage.style.transform = 'translateX(0)';
-    editorPage.classList.add('anim-enter');
-    requestAnimationFrame(function(){ requestAnimationFrame(function(){ editorPage.classList.remove('anim-enter'); }); });
+    if(fwCloseTimer){ clearTimeout(fwCloseTimer); fwFinishClose(); }
+    if(fwOpen && openNoteId === id) return;
+    if(fwOpen) return;
+    fwDirty = false; fwOpenedAt = Date.now();
+    loadNoteIntoEditor(id);                      // fills the panels, applies colour, hides the source card
+    var card = findCard(id), b = fwTargetBox(note.kind);
+    fwBox = b; fwOpen = true;
+    editorPage.style.transition = 'none';
+    if(card){                                    // FLIP: start exactly over the card (its real, zoomed/rotated rect)...
+      var a = card.getBoundingClientRect();
+      fwPlace({l:a.left, t:a.top, w:a.width, h:a.height});
+      editorPage.style.opacity = '1';
+    } else fwPlace(b);
+    editorPage.classList.add('vis');
+    void editorPage.offsetWidth;
+    editorPage.style.transition = '';
+    fwOverlay.classList.add('on');
+    editorPage.classList.add('on');
+    editorPage.style.opacity = '';
+    fwPlace(b);                                  // ...then animate to the centred window
     setTimeout(function(){
-      if(note.kind==='note'){ if(!note.title) titleInput.focus(); else bodyEl.focus(); }
-      else if(note.kind==='quick'){ quickInput.focus(); }
-      else if(note.kind==='photo'){ photoCaptionInput.focus(); }
-    }, 60);
+      if(!fwOpen || openNoteId !== id) return;
+      var o = {preventScroll:true};
+      if(note.kind==='note'){ if(!note.title) titleInput.focus(o); else bodyEl.focus(o); }
+      else if(note.kind==='quick'){ quickInput.focus(o); }
+      else if(note.kind==='photo'){ photoCaptionInput.focus(o); }
+    }, 380);
   }
 
   function closeEditor(){
+    if(!fwOpen) return;
+    fwOpen = false;
     stopRecordingIfActive();
-    editorPage.classList.add('anim-enter');
-    setTimeout(function(){
-      editorPage.hidden = true;
-      editorPage.classList.remove('anim-enter');
-      editorPage.style.transform = 'translateX(0)';
-      openNoteId = null;
-      renderAll();
-    }, 160);
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    setTextTools(false); setFolderPickOpen(false);
+    flushSave();                                 // same save the old editor relied on
+    var note = getNote(openNoteId);
+    if(note) refreshCard(note);
+    var card = openNoteId ? findCard(openNoteId) : null;   // look the card up again: renderBoard() may have rebuilt it
+    fwOverlay.classList.remove('on');
+    editorPage.classList.remove('on');
+    if(card){                                    // fly back to wherever the card is now
+      var a = card.getBoundingClientRect();
+      fwPlace({l:a.left, t:a.top, w:a.width, h:a.height});
+      card.style.transition = 'opacity 0.35s ease 0.15s'; card.style.opacity = '';
+      fwCloseTimer = setTimeout(fwFinishClose, 520);
+    } else {                                     // card is gone: plain fade
+      editorPage.style.transition = 'opacity 0.25s ease';
+      fwCloseTimer = setTimeout(fwFinishClose, 280);
+    }
+  }
+  function forceCloseEditor(){                   // instant (e.g. the open item was deleted)
+    clearTimeout(fwCloseTimer); fwCloseTimer = null;
+    fwOpen = false; stopRecordingIfActive(); setTextTools(false); setFolderPickOpen(false);
+    fwOverlay.classList.remove('on');
+    editorPage.classList.remove('vis','on'); editorPage.style.transition = ''; editorPage.style.opacity = '';
+    openNoteId = null;
   }
   document.getElementById('closeBtn').addEventListener('click', closeEditor);
+  fwOverlay.addEventListener('click', function(){ if(Date.now() - fwOpenedAt > 350) closeEditor(); });
 
   function navigateAnimated(direction){
+    if(!fwOpen) return;
     var list = currentNavList();
     if(list.length < 2) return;
     var idx = list.findIndex(function(n){ return n.id === openNoteId; });
     if(idx === -1) return;
-    var newIdx = (idx + direction + list.length) % list.length;
-    editorPage.style.transition = 'opacity 0.14s ease, transform 0.14s ease';
-    editorPage.style.opacity = '0';
-    editorPage.style.transform = 'translateX(' + (direction>0?-26:26) + 'px)';
+    var next = list[(idx + direction + list.length) % list.length];
+    fwIn.style.transition = 'opacity 0.14s ease, transform 0.14s ease';
+    fwIn.style.opacity = '0';
+    fwIn.style.transform = 'translateX(' + (direction>0?-26:26) + 'px)';
     setTimeout(function(){
-      loadNoteIntoEditor(list[newIdx].id);
-      editorPage.style.transition = 'none';
-      editorPage.style.transform = 'translateX(' + (direction>0?26:-26) + 'px)';
-      void editorPage.offsetWidth;
-      editorPage.style.transition = 'opacity 0.18s ease, transform 0.18s ease';
-      editorPage.style.opacity = '1';
-      editorPage.style.transform = 'translateX(0)';
+      if(!fwOpen) return;
+      flushSave();
+      var prev = getNote(openNoteId); if(prev) refreshCard(prev);
+      loadNoteIntoEditor(next.id);                       // hides the new source card, shows the previous one again
+      fwBox = fwTargetBox(next.kind); fwPlace(fwBox);    // window resizes for the new kind
+      fwIn.style.transition = 'none';
+      fwIn.style.transform = 'translateX(' + (direction>0?26:-26) + 'px)';
+      void fwIn.offsetWidth;
+      fwIn.style.transition = 'opacity 0.18s ease, transform 0.18s ease';
+      fwIn.style.opacity = ''; fwIn.style.transform = '';
+      setTimeout(function(){ fwIn.style.transition = ''; }, 200);
     }, 140);
   }
 
@@ -2316,7 +2438,7 @@
   (function(){
     var startX=null, startY=null, startTime=0;
     editorPage.addEventListener('pointerdown', function(e){
-      if(isInteractiveTarget(e.target)) return;
+      if(e.pointerType === 'mouse' || isInteractiveTarget(e.target)) return;
       startX = e.clientX; startY = e.clientY; startTime = Date.now();
     });
     editorPage.addEventListener('pointerup', function(e){
@@ -2367,13 +2489,21 @@
   function keyboardOpen(){ return vv ? (kbBase - vv.height > 140) : true; }
   function updateTextTools(){
     if(vv && !isEditing()) kbBase = vv.height;        // only learn the "no keyboard" height while nothing is being typed
-    var show = toolsWanted && (!coarsePointer || keyboardOpen());
+    var show = toolsWanted && fwOpen && (!coarsePointer || keyboardOpen());
     textTools.hidden = !show;
+    editorBottombarEl.classList.toggle('tools-cover', show && coarsePointer);
     if(!show){ editorScrollEl.style.paddingBottom = ''; return; }
-    // bottom offset: gap between the layout viewport and the visible one (= keyboard height) on touch; bottom bar height on desktop
-    var bottom = coarsePointer ? (vv ? Math.max(0, window.innerHeight - vv.offsetTop - vv.height) : 0) : editorBottombarEl.offsetHeight;
+    var bar = editorBottombarEl.offsetHeight, bottom, pad;
+    if(coarsePointer){   // phones: ride right on top of the keyboard (the window itself is re-fitted above the keyboard)
+      bottom = vv ? Math.max(0, window.innerHeight - vv.offsetTop - vv.height) : 0;
+      pad = Math.max(0, textTools.offsetHeight - bar) + 10;
+    } else {             // desktop: float just above the window's bottom row
+      var winBottom = fwBox ? (fwBox.t + fwBox.h) : window.innerHeight;
+      bottom = Math.max(0, window.innerHeight - winBottom) + bar + 8;
+      pad = textTools.offsetHeight + 8 + 10;
+    }
     textTools.style.bottom = Math.round(bottom) + 'px';
-    editorScrollEl.style.paddingBottom = Math.round((coarsePointer ? bottom : 0) + textTools.offsetHeight + 10) + 'px';
+    editorScrollEl.style.paddingBottom = Math.round(pad) + 'px';
     keepCaretAboveTools();
   }
   function setTextTools(on){ toolsWanted = on; updateTextTools(); }
@@ -2395,8 +2525,8 @@
   }
   bodyEl.addEventListener('focus', function(){ var n = getNote(openNoteId); setTextTools(!!n && n.kind === 'note'); });
   bodyEl.addEventListener('blur', function(){ setTimeout(function(){ if(document.activeElement !== bodyEl) setTextTools(false); }, 60); });
-  if(vv){ vv.addEventListener('resize', updateTextTools); vv.addEventListener('scroll', updateTextTools); }
-  window.addEventListener('resize', updateTextTools);
+  if(vv){ vv.addEventListener('resize', function(){ fwRefit(); updateTextTools(); }); vv.addEventListener('scroll', function(){ fwRefit(); updateTextTools(); }); }
+  window.addEventListener('resize', function(){ fwRefit(); updateTextTools(); });
   document.addEventListener('selectionchange', keepCaretAboveTools);
   textTools.addEventListener('mousedown', function(e){ e.preventDefault(); });   // tapping a tool keeps the cursor and the keyboard
 
@@ -2618,12 +2748,13 @@
     note.locked = !note.locked; touch(note); scheduleSave(true); updateLockBtn(note);
   });
 
-  function touch(note){ note.updatedAt = Date.now(); }
+  function touch(note){ note.updatedAt = Date.now(); fwDirty = true; }
   function scheduleSave(immediate){
     var indicator = document.getElementById('saveIndicator');
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function(){
       persistNotes();
+      var cur = getNote(openNoteId); if(cur && fwOpen) refreshCard(cur);   // card preview updates while editing
       indicator.style.opacity = '1';
       clearTimeout(indicator._t);
       indicator._t = setTimeout(function(){ indicator.style.opacity = '0'; }, 1200);
@@ -2779,7 +2910,7 @@
     } else if(pendingDeleteNoteId){
       notes = notes.filter(function(n){ return n.id !== pendingDeleteNoteId; });
       persistNotes();
-      if(openNoteId === pendingDeleteNoteId){ editorPage.hidden = true; openNoteId = null; }
+      if(openNoteId === pendingDeleteNoteId){ forceCloseEditor(); }
       if(activeCardId === pendingDeleteNoteId) activeCardId = null;
       renderAll();
     } else if(pendingDeleteFolderId){
@@ -2801,7 +2932,8 @@
     if(mod && (e.key==='n'||e.key==='N')){ e.preventDefault(); createItem('note'); }
     else if(e.key === 'Escape'){
       if(!drawOverlay.hidden) drawOverlay.hidden = true;
-      else if(!editorPage.hidden) closeEditor();
+      else if(folderPickOpen) setFolderPickOpen(false);
+      else if(fwOpen) closeEditor();
       else if(document.getElementById('modalOverlay').classList.contains('show')) hideModal();
       else if(fabMenuOpen) setFabMenu(false);
       else if(selectionMode) exitSelectionMode();
