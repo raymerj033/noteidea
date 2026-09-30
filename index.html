@@ -151,6 +151,30 @@
   .card.color-paper.kind-note .card-title{ font-size:15.5px; }
   .card.color-paper.kind-note .card-snippet{ font-size:13px; line-height:1.6; opacity:0.72; }
   .mode-masonry .card.color-paper.kind-note .card-snippet{ font-size:13.5px; }
+
+  /* ---- note / quick note: readable preview with a fade at the bottom ---- */
+  .kind-note .card-body, .kind-quick .card-body{ position:relative; padding:20px 20px 16px 20px; }
+  .kind-quick .card-body{ padding:18px 18px 14px 18px; }
+  .pv{ position:relative; overflow:hidden; max-height:300px; flex:1 1 auto; min-height:0; color:var(--ctext); }
+  .mode-masonry .pv{ max-height:360px; }
+  .card.sized .pv{ max-height:none; }
+  .pv.clipped::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:72px; background:linear-gradient(transparent, var(--cbg)); pointer-events:none; }
+  .qpv{ max-height:170px; }
+  .card.sized .qpv{ max-height:none; }
+  .pv-title{ font-size:22px; line-height:1.08; letter-spacing:-0.03em; font-weight:700; margin:0 0 9px 0; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; word-break:break-word; }
+  .pv-title.untitled{ opacity:0.4; font-weight:600; }
+  .pvb{ font-size:11.5px; line-height:1.5; }
+  .mode-masonry .pvb{ font-size:12.5px; }
+  .pvb h1{ font-size:15px; line-height:1.2; letter-spacing:-0.02em; font-weight:700; margin:10px 0 4px 0; }
+  .pvb h2{ font-size:12.5px; line-height:1.25; font-weight:700; margin:10px 0 4px 0; }
+  .pvb p, .pvb div, .pvb li{ margin:0 0 3px 0; color:var(--ctext); opacity:0.7; }
+  .pvb ul{ list-style:none; margin:0; padding:0; }
+  .pvb li{ position:relative; padding-left:13px; }
+  .pvb li::before{ content:""; position:absolute; left:2px; top:0.6em; width:4px; height:4px; border-radius:50%; background:currentColor; opacity:0.45; }
+  .hl, .pvb .hl{ background:#fbf04a; color:#14141c; border-radius:3px; padding:0 2px; box-decoration-break:clone; -webkit-box-decoration-break:clone; opacity:1; }
+  .qpv .quick-text{ display:block; -webkit-line-clamp:unset; overflow:visible; font-size:13.5px; line-height:1.5; font-weight:500; word-break:break-word; }
+  .mode-masonry .qpv .quick-text{ font-size:14px; }
+  .kind-note .card-footer, .kind-quick .card-footer{ position:absolute; right:16px; bottom:10px; margin:0; z-index:2; }
   .card.kind-photo{ padding:0; }
   .card.kind-photo .card-photo-fill{ position:relative; width:100%; height:100%; flex:1; overflow:hidden; }
   .card.kind-photo .card-photo-fill img{ width:100%; height:100%; object-fit:cover; display:block; }
@@ -302,34 +326,34 @@
   .editor-inner.audio-mode, .editor-inner.link-mode{ max-width:none; }
   .editor-inner[hidden]{ display:none !important; }
 
-  .note-title-input{ width:100%; border:none; outline:none; background:transparent; font-size:26px; font-weight:700; letter-spacing:-0.02em; color:inherit; margin-bottom:10px; padding-right:40px; }
-  .note-title-input::placeholder{ color:currentColor; opacity:0.35; }
-  .note-body{ outline:none; font-size:15.5px; line-height:1.7; color:inherit; min-height:220px; }
-  .note-body h1{ font-size:22px; font-weight:700; margin:1.1em 0 0.4em 0; }
-  .note-body h2{ font-size:18px; font-weight:700; margin:1em 0 0.4em 0; }
-  .note-body ul{ padding-left:1.3em; margin:0.6em 0; }
-  .note-body li{ margin:0.25em 0; }
+  #noteEditorInner{ max-width:580px; padding:clamp(26px,5vw,52px) clamp(20px,5vw,36px) 20px clamp(20px,5vw,36px); }
+  .note-title-input{ width:100%; border:none; outline:none; background:transparent; font-size:clamp(32px,7vw,50px); font-weight:700; line-height:1.05; letter-spacing:-0.035em; color:inherit; margin:0 0 14px 0; padding:0 40px 0 0; }
+  .note-title-input::placeholder{ color:currentColor; opacity:0.28; }
+  .note-body{ outline:none; font-size:15px; line-height:1.65; color:inherit; min-height:220px; caret-color:var(--hover); }
+  .note-body:empty::before{ content:attr(data-placeholder); color:currentColor; opacity:0.35; }
+  .note-body h1{ font-size:clamp(24px,4.4vw,30px); line-height:1.1; letter-spacing:-0.03em; font-weight:700; margin:1.1em 0 0.35em 0; }
+  .note-body h2{ font-size:17px; font-weight:600; margin:1.5em 0 0.5em 0; }
+  .note-body ul{ list-style:none; padding:0; margin:0.5em 0; }
+  .note-body li{ position:relative; padding-left:22px; margin:0 0 6px 0; color:var(--fw-mute); }
+  .note-body li::before{ content:""; position:absolute; left:4px; top:0.62em; width:7px; height:7px; border-radius:50%; background:var(--fw-line); }
+  .note-body span[style*="251, 240, 74"], .note-body span[style*="fbf04a"]{ color:#14141c !important; border-radius:3px; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
   .note-body img{ max-width:100%; border-radius:14px; display:block; margin:12px 0; cursor:grab; box-shadow:0 10px 24px -12px rgba(0,0,0,0.3); }
   .note-body audio{ width:100%; display:block; }
-  .note-body :empty:before{ content:attr(data-placeholder); color:currentColor; opacity:0.35; }
 
-  .quick-input{ width:100%; height:100%; border:none; outline:none; background:transparent; resize:none; font-size:21px; font-weight:500; line-height:1.5; color:inherit; font-family:inherit; min-height:200px; }
+  .quick-input{ width:100%; height:100%; border:none; outline:none; background:transparent; resize:none; font-size:22px; font-weight:500; line-height:1.5; letter-spacing:-0.01em; color:inherit; font-family:inherit; min-height:200px; padding:22px 36px 0 0; display:block; }
   .quick-input::placeholder{ color:currentColor; opacity:0.35; }
+  .swatch-row[hidden]{ display:none; }
+  .text-tools .hl-chip{ width:20px; height:20px; border-radius:6px; background:#fbf04a; color:#14141c; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .text-tools button.on{ background:var(--border); box-shadow:inset 0 0 0 1.5px var(--ink-soft); }
 
   .photo-display{ width:auto; height:auto; max-width:100%; max-height:min(46vh,420px); display:block; border-radius:26px; margin-bottom:18px; box-shadow:0 20px 50px -18px rgba(0,0,0,0.4); }
   .photo-caption-input{ width:100%; border:none; outline:none; background:transparent; font-size:16px; text-align:center; color:inherit; font-weight:600; }
   .photo-caption-input::placeholder{ color:currentColor; opacity:0.4; }
 
   .audio-editor-center, .link-editor-center{ display:flex; flex-direction:column; align-items:center; gap:18px; padding-top:20px; }
-  .record-btn{ width:96px; height:96px; border-radius:50%; border:2px solid currentColor; background:transparent; color:inherit; display:flex; align-items:center; justify-content:center; transition:transform 0.15s ease, background 0.15s ease; }
-  .record-btn:hover{ transform:scale(1.04); }
-  .record-btn.recording{ background:var(--danger); border-color:var(--danger); color:#fff; animation:pulse 1.4s ease infinite; }
   @keyframes pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(175,74,60,0.35);} 50%{ box-shadow:0 0 0 14px rgba(175,74,60,0);} }
-  .record-status{ font-size:13px; opacity:0.65; min-height:18px; }
   .audio-title-input, .link-title-input{ width:100%; text-align:center; border:none; outline:none; background:transparent; font-size:19px; font-weight:600; color:inherit; }
   .audio-title-input::placeholder, .link-title-input::placeholder{ color:currentColor; opacity:0.35; }
-  .audio-player-wrap{ width:100%; }
-  .audio-player-wrap audio{ width:100%; }
   .audio-actions-row{ display:flex; gap:10px; }
   .pill-btn{ border:1px solid currentColor; border-radius:999px; padding:8px 16px; background:transparent; color:inherit; font-size:13px; opacity:0.85; display:flex; align-items:center; gap:6px; }
   .pill-btn:hover{ opacity:1; }
@@ -432,13 +456,50 @@
 
   @media (max-width:600px){
     .editor-inner{ padding:16px 18px 20px 18px; }
-    .note-title-input{ font-size:24px; }
     /* phones: sit the bottom buttons close to the screen edge (desktop/tablet unchanged) */
     :root{ --phone-bottom:max(12px, calc(env(safe-area-inset-bottom,0px) - 10px)); }
     .fab-cluster{ bottom:var(--phone-bottom); }
     .zoom-wrap, .scenes-wrap{ bottom:calc(var(--phone-bottom) + 8px); }
     .selection-bar{ bottom:var(--phone-bottom); }
   }
+
+  /* ---- AUDIO: card chip ---- */
+  .card.kind-audio .card-body{ position:relative; justify-content:center; padding:16px 16px 16px 14px; }
+  .card.kind-audio .audio-row{ gap:12px; }
+  .card.kind-audio .audio-icon, .card.kind-audio .audio-play-btn{ width:48px; height:48px; background:var(--ctext); color:var(--cbg); cursor:pointer; transition:transform 0.2s var(--ease), background 0.2s ease; }
+  .card.kind-audio .audio-icon:before, .card.kind-audio .audio-play-btn:before{ display:none; }
+  .card.kind-audio .audio-icon svg, .card.kind-audio .audio-play-btn svg{ color:var(--cbg); }
+  .card.kind-audio .audio-play-btn:hover{ background:var(--hover); transform:scale(1.1) rotate(-8deg); }
+  .card.kind-audio .audio-play-btn:hover svg{ color:#fff; }
+  .card.kind-audio .audio-play-btn:active{ transform:scale(0.94); }
+  .audio-meta{ flex:1; min-width:0; }
+  .audio-meta .audio-label{ display:block; }
+  .aw{ display:flex; align-items:center; gap:2px; height:22px; margin-top:5px; }
+  .aw i{ flex:1; min-width:2px; border-radius:2px; background:var(--ctext); opacity:0.22; transition:height 0.12s, background 0.1s, opacity 0.1s; }
+  .aw i.on{ background:var(--hover); opacity:1; }
+  .adur{ font-size:12px; opacity:0.6; font-variant-numeric:tabular-nums; flex-shrink:0; }
+  .card.kind-audio .card-footer{ position:absolute; top:8px; right:12px; margin:0; }
+
+  /* ---- AUDIO: floating window ---- */
+  #audioEditorInner{ margin:auto 0; padding:32px 28px 24px; }
+  #audioEditorInner .audio-editor-center{ gap:16px; padding-top:0; }
+  #audioEditorInner .record-btn{ margin-bottom:10px; }
+  .record-btn{ position:relative; width:104px; height:104px; border-radius:50%; border:0; background:var(--fw-ink); color:var(--fw-bg); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:transform 0.2s var(--ease), background 0.25s ease, color 0.25s ease; }
+  .record-btn:hover{ background:var(--hover); color:#fff; transform:scale(1.06) rotate(-8deg); }
+  .record-btn:active{ transform:scale(0.95); }
+  .record-btn.recording, .record-btn.recording:hover{ background:var(--danger); color:#fff; transform:none; animation:none; }
+  .record-btn.recording::before, .record-btn.recording::after{ content:""; position:absolute; inset:0; border-radius:50%; border:2px solid var(--danger); animation:rec-ring 1.6s ease-out infinite; pointer-events:none; }
+  .record-btn.recording::after{ animation-delay:0.8s; }
+  @keyframes rec-ring{ to{ transform:scale(1.7); opacity:0; } }
+  .record-status{ font-size:13px; color:var(--fw-mute); min-height:18px; font-variant-numeric:tabular-nums; text-align:center; }
+  .aud-wave{ display:flex; align-items:center; gap:3px; height:56px; width:100%; max-width:360px; cursor:pointer; }
+  .aud-wave i{ flex:1; min-width:2px; border-radius:2px; background:var(--fw-line); transition:height 0.12s, background 0.1s; }
+  .aud-wave i.on{ background:var(--hover); }
+  #audioEditorInner .audio-title-input{ max-width:320px; font-size:22px; letter-spacing:-0.02em; }
+  .fwin .pill-btn{ border:1px solid var(--fw-line); opacity:1; padding:8px 16px; transition:background 0.2s ease; cursor:pointer; }
+  .fwin .pill-btn:hover{ background:var(--fw-soft); }
+  .fwin .pill-btn[hidden]{ display:none; }
+  @media (prefers-reduced-motion:reduce){ .record-btn.recording::before, .record-btn.recording::after{ animation:none; } }
 </style>
 </head>
 <body>
@@ -582,12 +643,10 @@
       <!-- AUDIO editor -->
       <div class="editor-inner audio-mode" id="audioEditorInner" hidden>
         <div class="audio-editor-center">
-          <button class="record-btn" id="recordBtn" title="Record">
-            <svg id="recordIcon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
-          </button>
+          <button class="record-btn" id="recordBtn" title="Record" aria-label="Record"></button>
           <div class="record-status" id="recordStatus">Tap to record</div>
+          <div class="aud-wave" id="audioWave"></div>
           <input type="text" class="audio-title-input" id="audioTitleInput" placeholder="Label this audio…" maxlength="140">
-          <div class="audio-player-wrap" id="audioPlayerWrap" hidden><audio id="audioPlayer" controls></audio></div>
           <div class="audio-actions-row">
             <button class="pill-btn" id="audioUploadBtn">Upload file</button>
             <button class="pill-btn" id="audioReRecordBtn" hidden>Re-record</button>
@@ -642,6 +701,7 @@
       <button data-cmd="h1" title="Heading"><span class="fm-icon"><span style="font-size:11px;font-weight:700;">H1</span></span></button>
       <button data-cmd="h2" title="Subheading"><span class="fm-icon"><span style="font-size:11px;font-weight:700;">H2</span></span></button>
       <button data-cmd="ul" title="Bullet list"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1" fill="currentColor" stroke="none"/><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/></svg></span></button>
+      <button data-cmd="hl" id="hlBtn" title="Highlight"><span class="fm-icon"><span class="hl-chip">A</span></span></button>
       <div class="fm-sep"></div>
       <button id="imageBtn" title="Image / GIF"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-5-9 9"/></svg></span></button>
       <button id="noteAudioBtn" title="Audio"><span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg></span></button>
@@ -725,6 +785,7 @@
 
   var mediaRecorder = null, recordedChunks = [], recordStartTime = 0, recordTimerInterval = null;
   var currentAudioEl = null, currentAudioNoteId = null;
+  var audioInfo = {}, audioMsg = '', recNoteId = null, recCtx = null, recAnalyser = null, recPeaks = [];   // audioInfo[id] = {src, dur, peaks}
 
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
   function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
@@ -848,7 +909,7 @@
   function defaultSize(kind){
     if(kind==='quick') return {w:190,h:150};
     if(kind==='photo') return {w:220,h:220};
-    if(kind==='audio') return {w:206,h:130};
+    if(kind==='audio') return {w:270,h:96};
     if(kind==='link') return {w:206,h:120};
     return {w:210,h:260};
   }
@@ -1089,13 +1150,75 @@
     if(boardMode === 'free'){ boardInner.style.zoom = boardZoom; }
     else { boardInner.style.zoom = ''; }
   }
+  // a note is always the plain white "paper"; only quick notes (and the other kinds) use the card colour
+  function cardColor(n){ return n.kind === 'note' ? 'paper' : (n.color || 'paper'); }
+  // readable preview of a note body: keeps headings, bullets, bold/italic and yellow highlights; drops images/audio
+  function previewHTML(html){
+    var d = document.createElement('div'); d.innerHTML = html || '';
+    var budget = 900;
+    function isHl(el){
+      var bg = (el.style && el.style.backgroundColor) || '';
+      return !!bg && bg !== 'transparent' && !/^rgba\(\s*0,\s*0,\s*0,\s*0\s*\)$/.test(bg);
+    }
+    function kids(node){ var o = ''; Array.prototype.forEach.call(node.childNodes, function(c){ if(budget > 0) o += walk(c); }); return o; }
+    function walk(node){
+      if(node.nodeType === 3){ var t = node.nodeValue; if(!t) return ''; budget -= t.length; return escapeHtml(t); }
+      if(node.nodeType !== 1) return '';
+      var tag = node.tagName;
+      if(tag === 'IMG' || tag === 'AUDIO' || tag === 'SCRIPT' || tag === 'STYLE' || tag === 'VIDEO') return '';
+      if(tag === 'BR') return '<br>';
+      var inner = kids(node);
+      if(tag === 'H1') return '<h1>'+inner+'</h1>';
+      if(tag === 'H2' || tag === 'H3') return '<h2>'+inner+'</h2>';
+      if(tag === 'UL' || tag === 'OL') return '<ul>'+inner+'</ul>';
+      if(tag === 'LI') return '<li>'+inner+'</li>';
+      if(tag === 'P' || tag === 'DIV' || tag === 'BLOCKQUOTE') return inner.replace(/^(<br>)+$/, '') ? '<p>'+inner+'</p>' : '';
+      if(tag === 'B' || tag === 'STRONG') return '<b>'+inner+'</b>';
+      if(tag === 'I' || tag === 'EM') return '<i>'+inner+'</i>';
+      if(tag === 'SPAN' || tag === 'FONT' || tag === 'MARK'){
+        var out = inner, st = node.style || {};
+        if(st.fontWeight === 'bold' || parseInt(st.fontWeight,10) >= 600) out = '<b>'+out+'</b>';
+        if(st.fontStyle === 'italic') out = '<i>'+out+'</i>';
+        if(tag === 'MARK' || isHl(node)) out = '<span class="hl">'+out+'</span>';
+        return out;
+      }
+      return inner;
+    }
+    return kids(d);
+  }
+  // the title is a single-line input: shrink its font until the whole title fits (never below 16px)
+  function fitTitle(){
+    var t = document.getElementById('titleInput'); if(!t || !t.clientWidth) return;
+    t.style.fontSize = '';
+    var size = parseFloat(getComputedStyle(t).fontSize) || 40;
+    while(t.scrollWidth > t.clientWidth + 1 && size > 16){ size -= 2; t.style.fontSize = size + 'px'; }
+  }
+  if(window.ResizeObserver){
+    var fitW = 0, fitRaf = 0;
+    new ResizeObserver(function(entries){
+      var w = Math.round(entries[0].contentRect.width);
+      if(w === fitW) return;                                   // our own font-size change only alters the height: ignore it
+      fitW = w;
+      if(fitRaf) cancelAnimationFrame(fitRaf);
+      fitRaf = requestAnimationFrame(function(){ fitRaf = 0; fitTitle(); });   // resize outside the observer callback
+    }).observe(document.getElementById('titleInput'));
+  }
+  document.getElementById('titleInput').addEventListener('input', fitTitle);
+  // show the bottom fade only when the preview is really cut off
+  function markPreviews(root){
+    Array.prototype.forEach.call((root || boardInner).querySelectorAll('.pv'), function(p){
+      p.classList.toggle('clipped', p.scrollHeight > p.clientHeight + 2);
+    });
+  }
   function cardBodyHTML(n){
     if(n.kind === 'audio'){
       var label = (n.title||'').trim();
       var iconHtml = n.audio
-        ? '<button class="audio-play-btn" data-audio-id="'+n.id+'">'+micIconBig+'</button>'
-        : '<span class="audio-icon">'+micIconBig+'</span>';
-      return '<div class="card-body"><div class="audio-row">'+iconHtml+'<span class="audio-label'+(label?'':' untitled')+'">'+(label?escapeHtml(label):'Audio note')+'</span></div>'+
+        ? '<button class="audio-play-btn" data-audio-id="'+n.id+'" aria-label="Play / pause">'+AIC[audioIsPlaying(n.id)?'pause':'play'](20)+'</button>'
+        : '<span class="audio-icon">'+AIC.mic(22)+'</span>';
+      return '<div class="card-body"><div class="audio-row">'+iconHtml+
+        '<div class="audio-meta"><span class="audio-label'+(label?' ':' untitled')+'">'+(label?escapeHtml(label):'Audio note')+'</span><div class="aw" data-aw="'+n.id+'"></div></div>'+
+        '<span class="adur" data-adur="'+n.id+'">0:00</span></div>'+
         '<div class="card-footer"><span></span><span class="card-badges">'+(n.locked&&boardMode==='free'?lockSvgSmall:'')+(n.pinned?pinSvg:'')+'</span></div></div>';
     }
     if(n.kind === 'link'){
@@ -1105,18 +1228,19 @@
     }
     if(n.kind === 'quick'){
       var text = htmlToTextPreserveBreaks(n.body);
-      return '<div class="card-body"><div class="quick-text'+(text?'':' untitled')+'">'+(text?escapeHtml(text):'Empty reminder')+'</div>'+
+      return '<div class="card-body"><div class="pv qpv"><div class="quick-text'+(text?'':' untitled')+'">'+(text?escapeHtml(text):'Empty reminder')+'</div></div>'+
         '<div class="card-footer"><span></span><span class="card-badges">'+(n.locked&&boardMode==='free'?lockSvgSmall:'')+(n.pinned?pinSvg:'')+'</span></div></div>';
     }
     var title = (n.title||'').trim();
     var cover = extractFirstImageSrc(n.body);
     var hasAudio = bodyHasAudio(n.body);
-    var snippet = htmlToTextPreserveBreaks(n.body);
     var badges = (n.locked&&boardMode==='free'?lockSvgSmall:'') + (n.pinned?pinSvg:'') + (hasAudio?audioBadgeSvg:'');
     return (cover ? '<div class="card-img" style="background-image:url(\''+cover+'\')"></div>' : '') +
       '<div class="card-body">' +
-        '<div class="card-title'+(title?'':' untitled')+'">'+(title?escapeHtml(title):'Untitled note')+'</div>'+
-        '<div class="card-snippet">'+escapeHtml(snippet)+'</div>'+
+        '<div class="pv npv">' +
+          '<div class="pv-title'+(title?'':' untitled')+'">'+(title?escapeHtml(title):'Untitled note')+'</div>'+
+          '<div class="pvb">'+previewHTML(n.body)+'</div>'+
+        '</div>'+
         '<div class="card-footer"><span></span><span class="card-badges">'+badges+'</span></div>'+
       '</div>';
   }
@@ -1143,7 +1267,7 @@
       var natural = boardMode === 'masonry' || !n.sized;
       var card = document.createElement('div');
       card.setAttribute('data-note-id', n.id);
-      var cls = 'card kind-' + n.kind + ' color-' + n.color + (natural ? ' auto-size' : ' sized') + (matchesFilter(n) ? '' : ' faded');
+      var cls = 'card kind-' + n.kind + ' color-' + cardColor(n) + (natural ? ' auto-size' : ' sized') + (matchesFilter(n) ? '' : ' faded');
       if(boardMode==='free' && selectionMode){ cls += selectedIds[n.id] ? ' selected' : ' select-dim'; }
       if(boardMode==='free' && !n.locked && ((selectionMode && selectedIds[n.id]) || (!selectionMode && activeCardId === n.id))) cls += ' movable';
       card.className = cls;
@@ -1204,6 +1328,8 @@
     emptyCanvas.hidden = notes.length !== 0;
 
     layoutBoard();
+    markPreviews();
+    paintAudio();          // cards are in the DOM now: draw their mini waves, durations and play icons
     if(lastRenderedMode !== boardMode){
       lastRenderedMode = boardMode;
       if(boardMode === 'free') restoreFreeView();
@@ -1221,37 +1347,195 @@
     btn.addEventListener('click', function(){ if(n.url) window.open(n.url, '_blank'); });
   }
 
+  // ---------- AUDIO: one shared player for the card circle and the floating window ----------
+  function aSvg(inner, s, fill){ return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" '+(fill?'fill="currentColor"':'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"')+'>'+inner+'</svg>'; }
+  var AIC = {
+    mic:   function(s){ return aSvg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>', s, false); },
+    stop:  function(s){ return aSvg('<rect x="6" y="6" width="12" height="12" rx="3"/>', s, true); },
+    play:  function(s){ return aSvg('<path d="M8 5v14l11-7z"/>', s, true); },
+    pause: function(s){ return aSvg('<rect x="6" y="5" width="4.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="4.5" height="14" rx="1.5"/>', s, true); }
+  };
+  function fmtT(t){ t = Math.max(0, t || 0); return Math.floor(t/60) + ':' + ('0' + Math.floor(t%60)).slice(-2); }
+  function audBars(el, n){ if(el.children.length !== n) el.innerHTML = new Array(n+1).join('<i></i>'); }
+  function audDraw(el, arr, prog){
+    var b = el.children, n = b.length;
+    for(var i=0;i<n;i++){
+      var v = 0;
+      if(arr && arr.length){
+        var a = Math.floor(i*arr.length/n), z = Math.max(a+1, Math.floor((i+1)*arr.length/n));
+        for(var k=a;k<z;k++) v = Math.max(v, arr[k] || 0);
+      }
+      b[i].style.height = Math.max(6, Math.min(100, 8 + v*92)) + '%';
+      b[i].classList.toggle('on', prog >= 0 && i/n <= prog);
+    }
+  }
+  // ---- playback plumbing: the stored data URL is turned into a real Blob (format sniffed from the bytes, not the declared MIME) ----
+  function dataUrlToBytes(u){
+    var i = u.indexOf(','), head = u.slice(0, i), body = u.slice(i + 1);
+    var bin = /;base64/i.test(head) ? atob(body) : decodeURIComponent(body);
+    var a = new Uint8Array(bin.length);
+    for(var k=0;k<bin.length;k++) a[k] = bin.charCodeAt(k);
+    return a;
+  }
+  function sniffAudioType(b, fallback){
+    function str(o, l){ var r = ''; for(var i=0;i<l;i++) r += String.fromCharCode(b[o+i] || 0); return r; }
+    if(str(0,4) === 'RIFF' && str(8,4) === 'WAVE') return 'audio/wav';
+    if(str(0,3) === 'ID3') return 'audio/mpeg';
+    if(b[0] === 0xFF && (b[1] & 0xE0) === 0xE0) return (b[1] & 0x06) === 0 ? 'audio/aac' : 'audio/mpeg';
+    if(str(4,4) === 'ftyp') return 'audio/mp4';
+    if(str(0,4) === 'OggS') return 'audio/ogg';
+    if(b[0] === 0x1A && b[1] === 0x45 && b[2] === 0xDF && b[3] === 0xA3) return 'audio/webm';
+    if(str(0,4) === 'fLaC') return 'audio/flac';
+    return fallback;
+  }
+  var audioBlobs = {};   // id -> { src, url, type, size }
+  function audioBlob(n){
+    var c = audioBlobs[n.id];
+    if(c && c.src === n.audio) return c;
+    if(c && c.url) { try{ URL.revokeObjectURL(c.url); }catch(e){} }
+    var declared = ((/^data:([^;,]*)/.exec(n.audio) || [])[1] || '');
+    var bytes = dataUrlToBytes(n.audio), type = sniffAudioType(bytes, /^audio\//.test(declared) ? declared : 'audio/mpeg');
+    c = audioBlobs[n.id] = { src:n.audio, size:bytes.length, type:type, url: bytes.length > 64 ? URL.createObjectURL(new Blob([bytes], {type:type})) : '' };
+    return c;
+  }
+  function decodeBytes(bytes){
+    var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext, ac = new OAC(1, 1, 44100);   // offline: never touches the device's audio output
+    var buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+    return new Promise(function(res, rej){ var p = ac.decodeAudioData(buf, res, rej); if(p && p.catch) p.catch(rej); });
+  }
+  // same interface as an <audio> element (paused, currentTime, play, pause, on* events) but backed by Web Audio, for browsers that refuse the source
+  var fbCtx = null;
+  function BufferPlayer(buf){
+    var self = this, node = null, offset = 0, startedAt = 0, timer = 0;
+    this.paused = true; this.duration = buf.duration; this._fb = true;
+    function stopNode(){ if(node){ node.onended = null; try{ node.stop(); }catch(e){} try{ node.disconnect(); }catch(e){} node = null; } clearInterval(timer); }
+    function go(){
+      node = fbCtx.createBufferSource(); node.buffer = buf; node.connect(fbCtx.destination);
+      startedAt = fbCtx.currentTime - offset;
+      node.onended = function(){ if(!node) return; stopNode(); self.paused = true; offset = 0; if(self.onended) self.onended(); };
+      node.start(0, offset); self.paused = false;
+      timer = setInterval(function(){ if(self.ontimeupdate) self.ontimeupdate(); }, 250);
+      if(self.onplay) self.onplay();
+    }
+    this.play = function(){
+      if(!fbCtx){ var AC = window.AudioContext || window.webkitAudioContext; fbCtx = new AC(); }
+      if(!self.paused) return Promise.resolve();
+      if(fbCtx.state === 'suspended') return fbCtx.resume().then(go);
+      go(); return Promise.resolve();
+    };
+    this.pause = function(){ if(self.paused) return; offset = self.currentTime; stopNode(); self.paused = true; if(self.onpause) self.onpause(); };
+    Object.defineProperty(this, 'currentTime', {
+      get: function(){ return self.paused ? offset : Math.min(buf.duration, fbCtx.currentTime - startedAt); },
+      set: function(v){ var was = !self.paused; stopNode(); offset = Math.max(0, Math.min(buf.duration, v)); if(was){ self.paused = true; go(); } else if(self.ontimeupdate) self.ontimeupdate(); }
+    });
+  }
+  function audioIsPlaying(id){ return !!currentAudioEl && currentAudioNoteId === id && !currentAudioEl.paused; }
+  // decode once per audio (duration + waveform); never changes what is stored
+  function audioAnalyze(n){
+    if(!n || !n.audio) return;
+    var cur = audioInfo[n.id]; if(cur && cur.src === n.audio) return;
+    var info = audioInfo[n.id] = { src:n.audio, dur:0, peaks:[] };
+    function fallback(){
+      if(audioInfo[n.id] !== info) return;
+      var h = 0; for(var i=0;i<String(n.id).length;i++) h += String(n.id).charCodeAt(i);
+      info.peaks = []; for(var j=0;j<56;j++) info.peaks.push(0.25 + 0.5*Math.abs(Math.sin(j*1.7 + h)));
+      var a = new Audio(); try{ a.src = audioBlob(n).url; }catch(e){ return paintAudio(); }
+      a.onloadedmetadata = function(){
+        if(isFinite(a.duration)){ info.dur = a.duration; paintAudio(); }
+        else { a.currentTime = 1e7; a.ontimeupdate = function(){ a.ontimeupdate = null; if(isFinite(a.duration)){ info.dur = a.duration; paintAudio(); } }; }
+      };
+      paintAudio();
+    }
+    try{
+      decodeBytes(dataUrlToBytes(n.audio)).then(function(b){
+        if(audioInfo[n.id] !== info) return;
+        var d = b.getChannelData(0), N = 56, sz = Math.max(1, Math.floor(d.length/N)), pk = [], mx = 0;
+        for(var i=0;i<N;i++){
+          var sum = 0, c = 0;
+          for(var k=i*sz; k<(i+1)*sz && k<d.length; k+=8){ sum += d[k]*d[k]; c++; }
+          var v = Math.sqrt(sum/Math.max(1,c)); pk.push(v); if(v > mx) mx = v;
+        }
+        info.peaks = pk.map(function(v){ return mx ? Math.pow(v/mx, 0.8) : 0.2; });
+        info.dur = b.duration;
+        paintAudio();
+      }).catch(fallback);
+    }catch(e){ fallback(); }
+  }
+  function bindAudioEl(el, n){
+    el.ontimeupdate = paintAudio; el.onplay = paintAudio; el.onpause = paintAudio;
+    el.onended = function(){ el.currentTime = 0; paintAudio(); };
+    el.onloadedmetadata = function(){ var i = audioInfo[n.id]; if(i && !i.dur && isFinite(el.duration)){ i.dur = el.duration; paintAudio(); } };
+    if(!el._fb) el.onerror = function(){ if(currentAudioEl === el && el._wantPlay) audioFallback(n); };
+  }
+  function audioSetup(n){
+    if(currentAudioEl && currentAudioNoteId === n.id && currentAudioEl._src === n.audio) return true;
+    if(currentAudioEl) currentAudioEl.pause();
+    var b = audioBlob(n);
+    if(!b.url){ audioMsg = 'This recording is empty — record it again.'; return false; }
+    var el = new Audio(); el.preload = 'auto'; el._src = n.audio; el.src = b.url;
+    bindAudioEl(el, n);
+    currentAudioEl = el; currentAudioNoteId = n.id;
+    return true;
+  }
+  // the browser refused the source: decode the bytes ourselves and play them with Web Audio
+  function audioFallback(n){
+    if(currentAudioEl && currentAudioEl._fb && currentAudioNoteId === n.id) return;
+    var b = audioBlob(n);
+    decodeBytes(dataUrlToBytes(n.audio)).then(function(buf){
+      var p = new BufferPlayer(buf); p._src = n.audio; bindAudioEl(p, n);
+      if(currentAudioEl && currentAudioEl !== p) currentAudioEl.pause();
+      currentAudioEl = p; currentAudioNoteId = n.id;
+      var i = audioInfo[n.id]; if(i && !i.dur) i.dur = buf.duration;
+      audioMsg = ''; return p.play();
+    }).then(paintAudio).catch(function(e){
+      if(currentAudioEl && currentAudioNoteId === n.id){ try{ currentAudioEl.pause(); }catch(x){} }   // back to the play icon
+      audioMsg = "Couldn't play this audio (" + b.type + ", " + Math.max(1, Math.round(b.size/1024)) + " KB). Try recording it again, or use another browser.";
+      paintAudio();
+    });
+  }
+  function audioToggle(n){
+    if(!n || !n.audio) return;
+    audioMsg = '';
+    if(!audioSetup(n)){ paintAudio(); return; }
+    var el = currentAudioEl;
+    if(el.paused){
+      el._wantPlay = true;
+      var pr = el.play();
+      if(pr && pr.catch) pr.catch(function(e){
+        if(e && e.name === 'NotAllowedError'){ audioMsg = "Your browser blocked playback — tap play again."; paintAudio(); }
+        else if(!el._fb) audioFallback(n);
+        else { audioMsg = "Couldn't play this audio (" + ((e && e.name) || 'error') + ")."; paintAudio(); }
+      });
+    } else el.pause();
+    paintAudio();
+  }
+  function audioPauseIf(id){ if(currentAudioEl && currentAudioNoteId === id && !currentAudioEl.paused){ currentAudioEl.pause(); paintAudio(); } }
+  // repaint every audio card (play icon, mini wave, duration) and the window
+  function paintAudio(){
+    Array.prototype.forEach.call(boardInner.querySelectorAll('.audio-play-btn'), function(btn){
+      var st = audioIsPlaying(btn.getAttribute('data-audio-id')) ? 'pause' : 'play';
+      if(btn.getAttribute('data-st') !== st){ btn.setAttribute('data-st', st); btn.innerHTML = AIC[st](20); }
+    });
+    Array.prototype.forEach.call(boardInner.querySelectorAll('.aw'), function(el){
+      var id = el.getAttribute('data-aw'), info = audioInfo[id], cur = (currentAudioNoteId === id && currentAudioEl) ? currentAudioEl.currentTime : 0;
+      audBars(el, 20);
+      audDraw(el, info ? info.peaks : [], (info && info.dur && cur > 0) ? cur/info.dur : -1);
+    });
+    Array.prototype.forEach.call(boardInner.querySelectorAll('.adur'), function(el){
+      var info = audioInfo[el.getAttribute('data-adur')]; el.textContent = fmtT(info ? info.dur : 0);
+    });
+    audioWinRender();
+  }
   function wireAudioPlayButton(card, n){
+    if(n.kind !== 'audio') return;
+    if(n.audio) audioAnalyze(n);
+    paintAudio();
     var btn = card.querySelector('.audio-play-btn');
-    if(!btn) return;
+    if(!btn) return;   // no audio yet: the circle is a plain mic and a click opens the window
     ['pointerdown','pointerup','click'].forEach(function(evt){
       btn.addEventListener(evt, function(e){ e.stopPropagation(); });
     });
-    btn.addEventListener('click', function(){ toggleAudioPlay(n, btn); });
-  }
-  function setPlayIcon(btn, playing){
-    btn.innerHTML = playing ? pauseIconBig : micIconBig;
-    btn.classList.toggle('playing', playing);
-  }
-  function toggleAudioPlay(note, btn){
-    if(currentAudioEl && currentAudioNoteId === note.id && !currentAudioEl.paused){
-      currentAudioEl.pause();
-      setPlayIcon(btn, false);
-      return;
-    }
-    if(currentAudioEl){
-      currentAudioEl.pause();
-      var prevBtn = document.querySelector('.audio-play-btn[data-audio-id="'+currentAudioNoteId+'"]');
-      if(prevBtn) setPlayIcon(prevBtn, false);
-    }
-    currentAudioEl = new Audio(note.audio);
-    currentAudioNoteId = note.id;
-    currentAudioEl.play().catch(function(){});
-    setPlayIcon(btn, true);
-    currentAudioEl.onended = function(){
-      var el = document.querySelector('.audio-play-btn[data-audio-id="'+note.id+'"]');
-      if(el) setPlayIcon(el, false);
-    };
+    btn.addEventListener('click', function(){ audioToggle(getNote(n.id) || n); });
   }
 
   function bringToFront(n){ n.z = ++zTop; }
@@ -1302,8 +1586,9 @@
     var swipe = clip.querySelector('.card-inner');
     (swipe || clip).innerHTML = html;
     COLORS.forEach(function(c){ el.classList.remove('color-'+c); });
-    el.classList.add('color-' + n.color);
+    el.classList.add('color-' + cardColor(n));
     wireAudioPlayButton(el, n); wireLinkOpen(el, n);
+    markPreviews(el);
   }
 
   function attachMasonryDrag(cardEl, note){
@@ -2188,8 +2473,6 @@
   var recordBtn = document.getElementById('recordBtn');
   var recordStatus = document.getElementById('recordStatus');
   var audioTitleInput = document.getElementById('audioTitleInput');
-  var audioPlayerWrap = document.getElementById('audioPlayerWrap');
-  var audioPlayer = document.getElementById('audioPlayer');
   var audioUploadInput = document.getElementById('audioUploadInput');
   var audioReRecordBtn = document.getElementById('audioReRecordBtn');
 
@@ -2197,12 +2480,12 @@
   var linkUrlInput = document.getElementById('linkUrlInput');
 
   function isInteractiveTarget(el){
-    return !!(el.closest && el.closest('input, select, textarea, button, [contenteditable="true"], audio, a, .swatch'));
+    return !!(el.closest && el.closest('input, select, textarea, button, [contenteditable="true"], audio, a, .swatch, .aud-wave'));
   }
 
   function applyEditorColor(note){
     COLORS.forEach(function(c){ editorPage.classList.remove('color-'+c); });
-    editorPage.classList.add('color-' + note.color);
+    editorPage.classList.add('color-' + cardColor(note));
   }
 
   function renderSwatches(note){
@@ -2294,6 +2577,7 @@
     updatePinBtn(note);
     updateLockBtn(note);
     showKindPanels(note.kind);
+    document.getElementById('swatchRow').hidden = (note.kind === 'note');   // notes are always white: no colour dots
 
     if(note.kind === 'note'){
       titleInput.value = note.title || '';
@@ -2315,7 +2599,7 @@
   var fwOverlay = document.getElementById('fwOverlay');
   var safeProbe = document.getElementById('safeProbe');
   var fwIn = document.getElementById('fwIn');
-  var FW_MAX = { note:{w:680,h:9999}, quick:{w:680,h:520}, audio:{w:460,h:440}, link:{w:460,h:420}, photo:{w:720,h:680}, folder:{w:780,h:600} };
+  var FW_MAX = { note:{w:680,h:9999}, quick:{w:680,h:440}, audio:{w:460,h:470}, link:{w:460,h:420}, photo:{w:720,h:680}, folder:{w:780,h:600} };
   // final size + position: capped per kind, limited by the visible screen (keyboard-aware via visualViewport) and the safe areas
   function fwTargetBox(kind){
     var m = FW_MAX[kind] || FW_MAX.note, cs = getComputedStyle(safeProbe);
@@ -2380,6 +2664,7 @@
     if(!fwOpen) return;
     fwOpen = false;
     stopRecordingIfActive();
+    audioPauseIf(openNoteId);                    // if it was playing, pause it
     if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
     setTextTools(false); setFolderPickOpen(false);
     flushSave();                                 // same save the old editor relied on
@@ -2400,7 +2685,7 @@
   }
   function forceCloseEditor(){                   // instant (e.g. the open item was deleted)
     clearTimeout(fwCloseTimer); fwCloseTimer = null;
-    fwOpen = false; stopRecordingIfActive(); setTextTools(false); setFolderPickOpen(false);
+    fwOpen = false; stopRecordingIfActive(); audioPauseIf(openNoteId); setTextTools(false); setFolderPickOpen(false);
     fwOverlay.classList.remove('on');
     editorPage.classList.remove('vis','on'); editorPage.style.transition = ''; editorPage.style.opacity = '';
     openNoteId = null;
@@ -2541,9 +2826,30 @@
       else if(cmd==='h1') document.execCommand('formatBlock', false, 'H1');
       else if(cmd==='h2') document.execCommand('formatBlock', false, 'H2');
       else if(cmd==='ul') document.execCommand('insertUnorderedList');
+      else if(cmd==='hl') toggleHighlight();
       note.body = bodyEl.innerHTML; touch(note); scheduleSave();
     });
   });
+
+  // yellow highlight, toggled: pressing it again on highlighted text removes it
+  function isYellow(v){ return /251,\s*240,\s*74/.test(v || '') || /fbf04a/i.test(v || ''); }
+  function currentHl(){
+    var v = '';
+    try{ v = document.queryCommandValue('hiliteColor') || document.queryCommandValue('backColor') || ''; }catch(e){}
+    return isYellow(v);
+  }
+  function toggleHighlight(){
+    var on = currentHl();
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('hiliteColor', false, on ? 'transparent' : '#fbf04a');
+    document.execCommand('styleWithCSS', false, false);
+    updateHlBtn();
+  }
+  function updateHlBtn(){
+    var b = document.getElementById('hlBtn'); if(!b) return;
+    b.classList.toggle('on', fwOpen && !textTools.hidden && bodyEl.contains(window.getSelection().anchorNode) && currentHl());
+  }
+  document.addEventListener('selectionchange', updateHlBtn);
 
   function insertNodeAtCursor(node){
     bodyEl.focus();
@@ -2588,7 +2894,7 @@
     var file = noteAudioInput.files && noteAudioInput.files[0];
     if(!file) return;
     var reader = new FileReader();
-    reader.onload = function(e){ insertInlineAudio(e.target.result); };
+    reader.onload = function(e){ insertInlineAudio(fixAudioMime(e.target.result, file)); };
     reader.readAsDataURL(file);
     noteAudioInput.value = '';
   });
@@ -2650,20 +2956,40 @@
     window.open(note.url, '_blank');
   });
 
+  var AUDIO_MIME = { mp3:'audio/mpeg', m4a:'audio/mp4', mp4:'audio/mp4', aac:'audio/aac', wav:'audio/wav', ogg:'audio/ogg', oga:'audio/ogg', opus:'audio/ogg', webm:'audio/webm', flac:'audio/flac' };
+  function fixAudioMime(dataUrl, file){
+    var m = /^data:([^;,]*)/.exec(dataUrl || ''), ext = ((file && file.name || '').split('.').pop() || '').toLowerCase();
+    if(m && !/^audio\//.test(m[1]) && AUDIO_MIME[ext]) return dataUrl.replace(/^data:[^;,]*/, 'data:' + AUDIO_MIME[ext]);
+    return dataUrl;
+  }
+  var audioWave = document.getElementById('audioWave');
+  function audioWinRender(){
+    if(!openNoteId || !recordBtn || !audioWave) return;
+    var n = getNote(openNoteId); if(!n || n.kind !== 'audio') return;
+    var rec = !!(mediaRecorder && mediaRecorder.state === 'recording' && recNoteId === n.id);
+    var st = rec ? 'rec' : (n.audio ? 'ready' : 'empty');
+    var info = audioInfo[n.id], playing = audioIsPlaying(n.id);
+    recordBtn.classList.toggle('recording', rec);
+    var ico = st === 'rec' ? 'stop' : st === 'ready' ? (playing ? 'pause' : 'play') : 'mic';
+    if(recordBtn.getAttribute('data-st') !== ico){ recordBtn.setAttribute('data-st', ico); recordBtn.innerHTML = AIC[ico](ico === 'mic' ? 32 : 34); }
+    recordBtn.setAttribute('aria-label', st === 'rec' ? 'Stop recording' : st === 'ready' ? (playing ? 'Pause' : 'Play') : 'Record');
+    audBars(audioWave, 56);
+    if(rec){
+      audDraw(audioWave, recPeaks.slice(-56), -1);
+    } else {
+      var cur = (currentAudioNoteId === n.id && currentAudioEl) ? currentAudioEl.currentTime : 0, dur = info ? info.dur : 0;
+      audDraw(audioWave, info ? info.peaks : [], (dur && cur > 0) ? cur/dur : -1);
+      recordStatus.textContent = audioMsg || (st === 'ready' ? fmtT(cur) + ' / ' + fmtT(dur) : 'Tap to record');
+    }
+    audioReRecordBtn.hidden = st !== 'ready';
+    document.getElementById('audioUploadBtn').hidden = rec;
+    if(rec) audioReRecordBtn.hidden = true;
+  }
   function resetAudioUI(note){
     audioTitleInput.value = note.title || '';
-    if(note.audio){
-      audioPlayer.src = note.audio;
-      audioPlayerWrap.hidden = false;
-      recordStatus.textContent = 'Tap the mic to re-record';
-      audioReRecordBtn.hidden = false;
-    } else {
-      audioPlayer.src = '';
-      audioPlayerWrap.hidden = true;
-      recordStatus.textContent = 'Tap to record';
-      audioReRecordBtn.hidden = true;
-    }
-    recordBtn.classList.remove('recording');
+    audioMsg = '';
+    audioAnalyze(note);
+    audioWinRender();
   }
   audioTitleInput.addEventListener('input', function(){
     var note = getNote(openNoteId); if(!note) return;
@@ -2675,51 +3001,92 @@
     clearInterval(recordTimerInterval);
   }
 
+  var IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   function startRecording(){
+    var nid = openNoteId;
+    audioMsg = '';
     if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-      recordStatus.textContent = "Recording isn't supported here — try uploading a file instead.";
-      return;
+      audioMsg = "Recording isn't supported here — try uploading a file instead."; audioWinRender(); return;
     }
+    if(currentAudioEl) audioPauseIf(currentAudioNoteId);
     navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
       recordedChunks = [];
-      try{ mediaRecorder = new MediaRecorder(stream); }catch(e){
-        recordStatus.textContent = "Recording isn't supported here — try uploading a file instead.";
-        return;
+      var rec;
+      try{ rec = new MediaRecorder(stream); }catch(e){
+        stream.getTracks().forEach(function(t){ t.stop(); });
+        audioMsg = "Recording isn't supported here — try uploading a file instead."; audioWinRender(); return;
       }
-      mediaRecorder.ondataavailable = function(e){ if(e.data && e.data.size>0) recordedChunks.push(e.data); };
-      mediaRecorder.onstop = function(){
+      mediaRecorder = rec; recNoteId = nid; recPeaks = [];
+      try{
+        if(IS_IOS) throw new Error('no live analyser on iOS');
+        var AC = window.AudioContext || window.webkitAudioContext;
+        recCtx = new AC(); recAnalyser = recCtx.createAnalyser(); recAnalyser.fftSize = 512;
+        recCtx.createMediaStreamSource(stream).connect(recAnalyser);
+      }catch(e){ recCtx = null; recAnalyser = null; }
+      rec.ondataavailable = function(e){ if(e.data && e.data.size>0) recordedChunks.push(e.data); };
+      rec.onstop = function(){
         stream.getTracks().forEach(function(t){ t.stop(); });
         clearInterval(recordTimerInterval);
-        var blob = new Blob(recordedChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
+        if(recCtx){ try{ recCtx.close(); }catch(e){} recCtx = null; recAnalyser = null; }
+        var dur = (Date.now() - recordStartTime)/1000, live = recPeaks.slice(), peaks = [];
+        for(var i=0;i<56;i++){
+          var m = 0, a = Math.floor(i*live.length/56), z = Math.max(a+1, Math.floor((i+1)*live.length/56));
+          for(var k=a;k<z;k++) m = Math.max(m, live[k] || 0);
+          peaks.push(m);
+        }
+        var blob = new Blob(recordedChunks, {type: rec.mimeType || 'audio/webm'});
         var reader = new FileReader();
         reader.onload = function(e){
-          var note = getNote(openNoteId);
+          var note = getNote(recNoteId);
           if(!note) return;
-          note.audio = e.target.result;
+          note.audio = e.target.result;               // same format as before: a data URL
+          if(IS_IOS) delete audioInfo[note.id]; else audioInfo[note.id] = { src:note.audio, dur:dur, peaks:peaks };   // on iOS the real wave is decoded afterwards
           touch(note); scheduleSave(true);
-          resetAudioUI(note);
+          if(openNoteId === note.id) resetAudioUI(note);
+          refreshCard(note); paintAudio();
         };
         reader.readAsDataURL(blob);
-        recordBtn.classList.remove('recording');
+        audioWinRender();
       };
-      mediaRecorder.start();
-      recordBtn.classList.add('recording');
+      rec.start();
       recordStartTime = Date.now();
       recordTimerInterval = setInterval(function(){
         var secs = Math.floor((Date.now()-recordStartTime)/1000);
-        var mm = Math.floor(secs/60), ss = secs%60;
-        recordStatus.textContent = 'Recording… ' + mm + ':' + (ss<10?'0':'')+ss;
-      }, 250);
+        if(recAnalyser){
+          var buf = new Uint8Array(recAnalyser.fftSize), sum = 0;
+          recAnalyser.getByteTimeDomainData(buf);
+          for(var i=0;i<buf.length;i++) sum += (buf[i]-128)*(buf[i]-128);
+          recPeaks.push(Math.min(1, Math.sqrt(sum/buf.length)/40));
+        } else recPeaks.push(0.2 + 0.5*Math.abs(Math.sin(recPeaks.length/2.7)*Math.cos(recPeaks.length/5.3)));   // decorative wave when no analyser
+        recordStatus.textContent = 'Recording… ' + fmtT(secs);
+        if(audioWave) audDraw(audioWave, recPeaks.slice(-56), -1);
+      }, 70);
+      audioWinRender();
     }).catch(function(){
-      recordStatus.textContent = "Microphone access denied — try uploading a file instead.";
+      audioMsg = "Microphone access denied — try uploading a file instead."; audioWinRender();
     });
   }
 
+  // big round button: mic → (recording) stop → play / pause
   recordBtn.addEventListener('click', function(){
+    var note = getNote(openNoteId); if(!note) return;
     if(mediaRecorder && mediaRecorder.state === 'recording'){ mediaRecorder.stop(); }
+    else if(note.audio){ audioMsg = ''; audioToggle(note); }
     else { startRecording(); }
   });
-  audioReRecordBtn.addEventListener('click', function(){ startRecording(); });
+  audioWave.addEventListener('click', function(e){
+    var note = getNote(openNoteId); if(!note || !note.audio) return;
+    var info = audioInfo[note.id]; if(!info || !info.dur) return;
+    if(mediaRecorder && mediaRecorder.state === 'recording') return;
+    if(!audioSetup(note)) return;
+    var r = audioWave.getBoundingClientRect();
+    currentAudioEl.currentTime = info.dur * Math.min(1, Math.max(0, (e.clientX - r.left)/r.width));
+    paintAudio();
+  });
+  audioReRecordBtn.addEventListener('click', function(){
+    var note = getNote(openNoteId); if(note) audioPauseIf(note.id);
+    startRecording();
+  });
   document.getElementById('audioUploadBtn').addEventListener('click', function(){ audioUploadInput.click(); });
   audioUploadInput.addEventListener('change', function(){
     var note = getNote(openNoteId);
@@ -2727,7 +3094,10 @@
     if(!note || !file) return;
     var reader = new FileReader();
     reader.onload = function(e){
-      note.audio = e.target.result; touch(note); scheduleSave(true); resetAudioUI(note);
+      audioPauseIf(note.id);
+      note.audio = fixAudioMime(e.target.result, file); delete audioInfo[note.id];
+      if(!(note.title||'').trim()) note.title = file.name.replace(/\.[^.]+$/, '');
+      touch(note); scheduleSave(true); resetAudioUI(note);
     };
     reader.readAsDataURL(file);
     audioUploadInput.value = '';
