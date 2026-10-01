@@ -288,29 +288,32 @@
   .selection-bar .sel-done{ background:none; color:inherit; opacity:0.75; width:34px; height:34px; padding:0; display:flex; align-items:center; justify-content:center; }
 
   /* ---------------- FLOATING WINDOW (shared by every item type) ---------------- */
-  .fw-overlay{ position:fixed; inset:0; z-index:200; background:rgba(20,22,35,0.25); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); opacity:0; pointer-events:none; transition:opacity 0.35s ease; }
+  .fw-overlay{ position:fixed; inset:0; z-index:200; background:rgba(20,22,35,0.25); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); opacity:0; pointer-events:none; transition:opacity 0.45s cubic-bezier(.22,1,.36,1); will-change:opacity; }
   .fw-overlay.on{ opacity:1; pointer-events:auto; }
   body.dark .fw-overlay{ background:rgba(0,0,0,0.38); }
   .fwin{
     --fw-bg:var(--card-paper-bg); --fw-ink:var(--card-paper-text); --fw-border:var(--card-paper-border);
     --fw-mute:rgba(128,128,128,0.85); --fw-line:rgba(128,128,128,0.28); --fw-soft:rgba(128,128,128,0.14);
-    position:fixed; left:0; top:0; width:0; height:0; z-index:210;
-    background:var(--fw-bg); color:var(--fw-ink); border:1px solid var(--fw-border);
-    border-radius:28px; box-shadow:var(--float-sh); overflow:hidden;
-    visibility:hidden; opacity:0; pointer-events:none;
-    transition:left 0.5s var(--ease), top 0.5s var(--ease), width 0.5s var(--ease), height 0.5s var(--ease), opacity 0.2s ease 0.3s;
+    position:fixed; inset:0; z-index:210; color:var(--fw-ink);
+    visibility:hidden; pointer-events:none; -webkit-tap-highlight-color:transparent;
   }
   @supports (color: color-mix(in srgb, red, blue)){
     .fwin{ --fw-mute:color-mix(in srgb, var(--fw-ink) 62%, transparent); --fw-line:color-mix(in srgb, var(--fw-ink) 18%, transparent); --fw-soft:color-mix(in srgb, var(--fw-ink) 9%, transparent); }
   }
   .fwin.vis{ visibility:visible; }
-  .fwin.on{ opacity:1; pointer-events:auto; transition:left 0.5s var(--ease), top 0.5s var(--ease), width 0.5s var(--ease), height 0.5s var(--ease), opacity 0.12s ease; }
+  .fwin.on .fw-clip{ pointer-events:auto; }
+  /* The window is laid out ONCE at its final size. Only a clip-path mask, opacity and transform are animated, so nothing reflows while it opens or closes. */
+  .fw-sh{ position:absolute; left:0; top:0; width:0; height:0; border-radius:28px; box-shadow:var(--float-sh); pointer-events:none; }
+  .fw-clip{ position:absolute; inset:0; background:var(--fw-bg); clip-path:inset(0 round 28px); -webkit-clip-path:inset(0 round 28px); }
+  .fw-box{ position:absolute; left:0; top:0; width:0; height:0; }
+  .fw-edge{ position:absolute; inset:0; border:1px solid var(--fw-border); border-radius:28px; pointer-events:none; }
+  .fw-anim .fw-clip{ will-change:clip-path, opacity; }
+  .fw-anim .fw-in{ will-change:opacity, transform; }
   .fwin.color-pink{ --fw-bg:var(--card-pink-bg); --fw-ink:var(--card-pink-text); --fw-border:var(--card-pink-border); }
   .fwin.color-lime{ --fw-bg:var(--card-lime-bg); --fw-ink:var(--card-lime-text); --fw-border:var(--card-lime-border); }
   .fwin.color-sky{  --fw-bg:var(--card-sky-bg);  --fw-ink:var(--card-sky-text);  --fw-border:var(--card-sky-border); }
   .fwin.color-dark{ --fw-bg:var(--card-dark-bg); --fw-ink:var(--card-dark-text); --fw-border:var(--card-dark-border); }
-  .fw-in{ height:100%; display:flex; flex-direction:column; min-height:0; opacity:0; transform:translateY(14px); transition:opacity 0.45s ease 0.2s, transform 0.45s var(--ease) 0.2s; }
-  .fwin.on .fw-in{ opacity:1; transform:none; }
+  .fw-in{ position:absolute; inset:0; display:flex; flex-direction:column; min-height:0; }
   .fw-x{ position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:50%; border:0; background:var(--fw-soft); color:inherit; display:flex; align-items:center; justify-content:center; z-index:6; padding:0; transition:background 0.2s ease, color 0.2s ease, transform 0.25s var(--ease); }
   .fw-x:hover{ background:var(--hover); color:#fff; transform:rotate(90deg); }
   #safeProbe{ position:fixed; left:0; top:0; width:0; height:0; visibility:hidden; pointer-events:none; padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px); }
@@ -744,6 +747,8 @@
   <!-- FLOATING WINDOW (shared by every item type: opens from its own card, FLIP) -->
   <div class="fw-overlay" id="fwOverlay"></div>
   <div class="fwin" id="editorPage" role="dialog" aria-modal="true">
+    <div class="fw-sh" id="fwSh"></div>
+    <div class="fw-clip" id="fwClip"><div class="fw-box" id="fwBoxEl">
     <button class="fw-x" id="closeBtn" title="Close" aria-label="Close">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
@@ -848,6 +853,8 @@
       <span class="save-indicator" id="saveIndicator" style="font-size:11px; opacity:0;">Saved</span>
     </div>
     </div><!-- /fw-in -->
+    <div class="fw-edge" id="fwEdge"></div>
+    </div><!-- /fw-box --></div><!-- /fw-clip -->
   </div><!-- /floating window -->
     <!-- TEXT TOOLS: only while typing in a note. Bar under the text; on phones it rides on top of the keyboard. -->
     <div class="text-tools" id="textToolsBar" hidden>
@@ -2745,7 +2752,7 @@
     folderPickPopover.innerHTML = html;
     Array.prototype.forEach.call(folderPickPopover.querySelectorAll('[data-pick]'), function(btn){
       btn.addEventListener('click', function(){
-        note.folderId = btn.getAttribute('data-pick') || null;
+        note.folderId = btn.getAttribute('data-pick') || null; fwStructural = true;
         touch(note); scheduleSave(true);
         updateFolderCircleBtn(note);
         setFolderPickOpen(false);
@@ -2825,11 +2832,27 @@
     }
   }
 
-  // ---------- FLOATING WINDOW: one FLIP open/close mechanism for every item type ----------
+  // ---------- FLOATING WINDOW: one animation engine for every item type ----------
+  // The content is laid out once at its FINAL size. Opening/closing animates a clip-path mask (grows from / shrinks to the card),
+  // plus opacity and transform: no layout per frame, interruptible, and heavy work (saving, re-rendering) waits until the motion ends.
   var fwOverlay = document.getElementById('fwOverlay');
   var safeProbe = document.getElementById('safeProbe');
   var fwIn = document.getElementById('fwIn');
+  var fwClip = document.getElementById('fwClip'), fwBoxEl = document.getElementById('fwBoxEl'), fwSh = document.getElementById('fwSh'), fwEdge = document.getElementById('fwEdge');
+  var fwFades = [fwSh, fwEdge, document.getElementById('closeBtn'), document.getElementById('fwBack')];   // chrome that fades in late / out early
   var FW_MAX = { note:{w:680,h:9999}, quick:{w:680,h:440}, audio:{w:460,h:470}, link:{w:460,h:440}, photo:{w:720,h:680}, folder:{w:780,h:600} };
+  var FW_R = 28, FW_CARD_R = 24;
+  var FW_OPEN = 'cubic-bezier(.22,1,.36,1)', FW_CLOSE = 'cubic-bezier(.32,.72,0,1)', FW_SOFT = 'cubic-bezier(.2,.8,.2,1)';
+  var fwPending = null;   // a morph whose content swap has not happened yet (still fading out)
+  var fwRunning = [], fwClosing = false, fwStructural = false, fwPersistAfter = false, fwCardH0 = 0, fwNeedRefit = false;
+  var FW_CAN = !!(fwClip.animate && window.CSS && CSS.supports && (CSS.supports('clip-path', 'inset(0px round 10px)') || CSS.supports('-webkit-clip-path', 'inset(0px round 10px)')));
+  function fwReduced(){ return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  function fwStop(){ fwRunning.forEach(function(a){ try{ a.cancel(); }catch(e){} }); fwRunning = []; }
+  function fwAnim(el, frames, opts){
+    var a = el.animate(frames, opts); fwRunning.push(a);
+    a.addEventListener('finish', function(){ var i = fwRunning.indexOf(a); if(i > -1 && opts.fill !== 'forwards') fwRunning.splice(i, 1); });
+    return a;
+  }
   // final size + position: capped per kind, limited by the visible screen (keyboard-aware via visualViewport) and the safe areas
   function fwTargetBox(kind){
     var m = FW_MAX[kind] || FW_MAX.note, cs = getComputedStyle(safeProbe);
@@ -2841,92 +2864,174 @@
     return { w:w, h:h, l: ox + sl + (vw - sl - sr - w)/2, t: oy + st + (vh - st - sb - h)/2 };
   }
   function fwPlace(b){
-    editorPage.style.left = b.l + 'px'; editorPage.style.top = b.t + 'px';
-    editorPage.style.width = b.w + 'px'; editorPage.style.height = b.h + 'px';
+    [fwBoxEl, fwSh].forEach(function(e){ e.style.left = b.l + 'px'; e.style.top = b.t + 'px'; e.style.width = b.w + 'px'; e.style.height = b.h + 'px'; });
   }
-  function fwRefit(){   // screen/keyboard changed while open: re-fit without animating
+  function rectOf(el){ var r = el.getBoundingClientRect(); return { l:r.left, t:r.top, w:r.width, h:r.height }; }
+  function shrunk(b, k){ return { l:b.l + b.w*(1-k)/2, t:b.t + b.h*(1-k)/2, w:b.w*k, h:b.h*k }; }
+  // clip-path that shows exactly this rectangle of the (full-screen) stage
+  function fwClipFor(rc, rad){
+    var W = editorPage.clientWidth, H = editorPage.clientHeight;
+    return 'inset(' + rc.t.toFixed(2) + 'px ' + Math.max(0, W - rc.l - rc.w).toFixed(2) + 'px ' + Math.max(0, H - rc.t - rc.h).toFixed(2) + 'px ' + rc.l.toFixed(2) + 'px round ' + rad + 'px)';
+  }
+  function fwCurClip(fallback){ var c = getComputedStyle(fwClip).clipPath; return (c && c !== 'none') ? c : fallback; }
+  function fwSetClip(v){ fwClip.style.clipPath = v; fwClip.style.webkitClipPath = v; }
+  function dur(ms){ return fwReduced() ? Math.min(ms, 140) : ms; }
+
+  // grow from `from` (the card's rectangle) to the window box `b`
+  function fwRunOpen(from, b){
+    fwStop(); fwPlace(b);
+    var end = fwClipFor(b, FW_R);
+    fwSetClip(end);
+    if(!FW_CAN) return;
+    var rd = fwReduced(), start = (from && !rd) ? fwClipFor(from, FW_CARD_R) : (rd ? end : fwClipFor(shrunk(b, 0.9), FW_R));
+    editorPage.classList.add('fw-anim');
+    var main = fwAnim(fwClip, [{ clipPath:start }, { clipPath:end }], { duration:dur(560), easing:FW_OPEN });
+    fwAnim(fwClip, [{ opacity:0 }, { opacity:1 }], { duration:dur(from ? 130 : 260), easing:'ease-out', fill:'backwards' });
+    fwAnim(fwIn, [{ opacity:0, transform:'translateY(16px)' }, { opacity:1, transform:'none' }], { duration:dur(440), delay:dur(150), easing:FW_SOFT, fill:'backwards' });
+    fwFades.forEach(function(el){ fwAnim(el, [{ opacity:0 }, { opacity:1 }], { duration:dur(260), delay:dur(230), easing:'ease-out', fill:'backwards' }); });
+    main.addEventListener('finish', function(){ editorPage.classList.remove('fw-anim'); fwAfterMotion(); });
+  }
+  // shrink back to `to` (the card's current rectangle); starts from wherever the window is right now, so it can interrupt an opening
+  function fwRunClose(to, onDone){
+    var fb = fwClipFor(fwBox, FW_R);
+    var startClip = fwRunning.length ? fwCurClip(fb) : fb;
+    var inOp = fwRunning.length ? getComputedStyle(fwIn).opacity : '1';
+    var fadeOps = fwFades.map(function(el){ return fwRunning.length ? getComputedStyle(el).opacity : '1'; });
+    fwStop();
+    if(!FW_CAN){ onDone(); return; }
+    var rd = fwReduced(), d = dur(440);
+    var end = (to && !rd) ? fwClipFor(to, FW_CARD_R) : (rd ? startClip : fwClipFor(shrunk(fwBox, 0.94), FW_R));
+    editorPage.classList.add('fw-anim');
+    fwSetClip(startClip);
+    var main = fwAnim(fwClip, [{ clipPath:startClip }, { clipPath:end }], { duration:d, easing:FW_CLOSE, fill:'forwards' });
+    fwAnim(fwIn, [{ opacity:inOp }, { opacity:0 }], { duration:dur(170), easing:'ease-out', fill:'forwards' });
+    fwFades.forEach(function(el, i){ fwAnim(el, [{ opacity:fadeOps[i] }, { opacity:0 }], { duration:dur(190), easing:'ease-out', fill:'forwards' }); });
+    // the last moments cross-fade the (card-coloured) window into the real card underneath
+    fwAnim(fwClip, [{ opacity:1 }, { opacity:0 }], { duration:Math.round(d*0.24), delay:Math.round(d*0.76), easing:'ease-in', fill:'forwards' });
+    main.addEventListener('finish', function(){ onDone(); });
+  }
+  // The window is ALREADY open here, so it must change shape smoothly from what is on screen now (never collapse to a card first):
+  // content + shadow + buttons fade out, `swap` loads the next item (and sets fwBox), the mask morphs to the new box, then everything fades back in.
+  function fwMorph(swap, fromRect, dirX){
+    var oldClip = fwCurClip(fwClipFor(fwBox, FW_R));
+    var running = fwRunning.length > 0;
+    var inOp = running ? getComputedStyle(fwIn).opacity : '1';
+    var fadeOps = fwFades.map(function(el){ return running ? getComputedStyle(el).opacity : '1'; });
+    fwStop();
+    if(!FW_CAN){ swap(); fwPlace(fwBox); fwSetClip(fwClipFor(fwBox, FW_R)); return; }
+    var out = fwIn.animate([{ opacity:inOp, transform:'none' }, { opacity:0, transform:'translateX(' + (dirX ? -dirX*22 : 0) + 'px)' }], { duration:dur(130), easing:'ease-in', fill:'forwards' });
+    fwRunning.push(out);
+    fwFades.forEach(function(el, i){ fwRunning.push(el.animate([{ opacity:fadeOps[i] }, { opacity:0 }], { duration:dur(110), easing:'ease-in', fill:'forwards' })); });
+    // Escape / back before the swap happened: cancel the morph and fade the current content back in
+    fwPending = { cancel:function(){
+      var curIn = getComputedStyle(fwIn).opacity, curF = fwFades.map(function(el){ return getComputedStyle(el).opacity; });
+      fwStop();
+      fwAnim(fwIn, [{ opacity:curIn }, { opacity:1 }], { duration:dur(160), easing:'ease-out' });
+      fwFades.forEach(function(el, i){ fwAnim(el, [{ opacity:curF[i] }, { opacity:1 }], { duration:dur(160), easing:'ease-out' }); });
+    } };
+    var go = function(){
+      fwPending = null;
+      if(!fwOpen){ fwStop(); return; }
+      swap();
+      fwPlace(fwBox);                                  // content + shadow are invisible right now, so moving them is safe
+      var end = fwClipFor(fwBox, FW_R), rd = fwReduced();
+      var start = rd ? end : (fromRect ? fwClipFor(fromRect, FW_CARD_R) : oldClip);
+      fwSetClip(end);
+      fwStop();                                        // drop the fade-outs; the new animations below start from opacity 0 (backwards fill), so no flash
+      editorPage.classList.add('fw-anim');
+      var main = fwAnim(fwClip, [{ clipPath:start }, { clipPath:end }], { duration:dur(480), easing:FW_OPEN });
+      fwAnim(fwIn, [{ opacity:0, transform:'translate(' + (dirX ? dirX*22 : 0) + 'px,' + (dirX ? 0 : 14) + 'px)' }, { opacity:1, transform:'none' }], { duration:dur(380), delay:dur(120), easing:FW_SOFT, fill:'backwards' });
+      fwFades.forEach(function(el){ fwAnim(el, [{ opacity:0 }, { opacity:1 }], { duration:dur(240), delay:dur(260), easing:'ease-out', fill:'backwards' }); });
+      main.addEventListener('finish', function(){ editorPage.classList.remove('fw-anim'); fwAfterMotion(); });
+    };
+    out.addEventListener('finish', go);
+  }
+  var fwFocusAfter = null;
+  function fwAfterMotion(){
+    if(fwNeedRefit){ fwNeedRefit = false; fwRefit(); }
+    if(fwFocusAfter){ var f = fwFocusAfter; fwFocusAfter = null; setTimeout(f, 40); }
+  }
+
+  // screen / keyboard changed while the window is open: slide the mask to the new box (content is re-laid-out once)
+  function fwRefit(){
     if(!fwOpen) return;
     var n = getNote(openNoteId); if(!n) return;
+    if(fwRunning.length){ fwNeedRefit = true; return; }
+    var old = fwClipFor(fwBox, FW_R);
     fwBox = fwTargetBox(n.kind);
-    editorPage.style.transition = 'none'; fwPlace(fwBox); void editorPage.offsetWidth; editorPage.style.transition = '';
+    fwPlace(fwBox);
+    var end = fwClipFor(fwBox, FW_R);
+    fwSetClip(end);
+    if(FW_CAN && old !== end && !fwReduced()) fwAnim(fwClip, [{ clipPath:old }, { clipPath:end }], { duration:260, easing:FW_OPEN });
     if(n.kind === 'folder' && folderGrid.firstChild && folderGrid.querySelector('.fcols') && folderGrid.querySelectorAll('.fcol').length !== folderColCount()) layoutFolderCols(true);
   }
   function fwFinishClose(){
-    fwCloseTimer = null;
-    editorPage.classList.remove('vis','on');
-    editorPage.style.transition = ''; editorPage.style.opacity = '';
+    fwStop(); fwClosing = false; fwPending = null;
+    editorPage.classList.remove('vis','on','fw-anim');
     openNoteId = null;
     hideSourceCard(null);
-    if(fwDirty){ fwDirty = false; renderAll(); }
+    var heavy = fwStructural; fwStructural = false;
+    var persist = fwPersistAfter; fwPersistAfter = false; fwDirty = false;
+    // the heavy work waits until all the motion is over
+    setTimeout(function(){ if(persist) persistNotes(); if(heavy) renderAll(); }, 30);
   }
   function openEditor(id){
     var note = getNote(id);
     if(!note) return;
-    if(fwCloseTimer){ clearTimeout(fwCloseTimer); fwFinishClose(); }
-    if(fwOpen && openNoteId === id) return;
+    if(fwClosing) fwFinishClose();                // a previous close is still running: finish it instantly
     if(fwOpen) return;
-    fwDirty = false; fwOpenedAt = Date.now();
-    loadNoteIntoEditor(id);                      // fills the panels, applies colour, hides the source card
+    fwDirty = false; fwStructural = false; fwOpenedAt = Date.now();
+    loadNoteIntoEditor(id);                      // fills the panels, applies colour
     var card = findCard(id), b = fwTargetBox(note.kind);
+    var from = card ? rectOf(card) : null;       // the card's real rectangle (already includes zoom, position and rotation)
+    fwCardH0 = card ? card.offsetHeight : 0;
+    if(card){ card.style.opacity = ''; setTimeout(function(){ if(fwOpen && openNoteId === id) hideSourceCard(id); }, 130); }   // the card hands over to the window with a short cross-fade
     fwBox = b; fwOpen = true;
-    editorPage.style.transition = 'none';
-    if(card){                                    // FLIP: start exactly over the card (its real, zoomed/rotated rect)...
-      var a = card.getBoundingClientRect();
-      fwPlace({l:a.left, t:a.top, w:a.width, h:a.height});
-      editorPage.style.opacity = '1';
-    } else fwPlace(b);
-    editorPage.classList.add('vis');
-    void editorPage.offsetWidth;
-    editorPage.style.transition = '';
+    editorPage.classList.add('vis','on');
     fwOverlay.classList.add('on');
-    editorPage.classList.add('on');
-    editorPage.style.opacity = '';
-    fwPlace(b);                                  // ...then animate to the centred window
-    setTimeout(function(){
+    fwRunOpen(from, b);
+    fwFocusAfter = function(){
       if(!fwOpen || openNoteId !== id) return;
       var o = {preventScroll:true};
       if(note.kind==='note'){ if(!note.title) titleInput.focus(o); else bodyEl.focus(o); }
       else if(note.kind==='quick'){ quickInput.focus(o); }
-
-    }, 380);
+    };
+    if(!FW_CAN) setTimeout(fwAfterMotion, 50);
   }
 
   // closeEditor(): closes the window — but from an item inside a folder it goes back to the folder; closeEditor(true) closes everything
   function closeEditor(all){
     if(!fwOpen) return;
+    if(fwPending && !all){ var pnd = fwPending; fwPending = null; pnd.cancel(); return; }   // a folder item was about to open: stay on the folder
+    fwPending = null;
     var par = parentOf(openNoteId);
     if(par && !all){ backToFolder(); return; }
-    if(par){                                       // leaving from inside an item: save it, then fly back to the FOLDER's card
+    if(par){                                       // leaving from inside an item: then fly back to the FOLDER's card
       stopRecordingIfActive(); audioPauseIf(openNoteId); pwReset();
-      flushSave(); openNoteId = par.id;
+      openNoteId = par.id;
     }
-    fwOpen = false;
+    fwOpen = false; fwClosing = true; fwFocusAfter = null;
     stopRecordingIfActive();
     audioPauseIf(openNoteId);                    // if it was playing, pause it
     if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
     setTextTools(false); setFolderPickOpen(false); pwReset();
-    flushSave();                                 // same save the old editor relied on
+    if(fwDirty){ clearTimeout(saveTimer); fwPersistAfter = true; }   // save once the motion has ended (serialising every note mid-animation drops frames)
     var note = getNote(openNoteId);
-    if(note) refreshCard(note);
-    var card = openNoteId ? findCard(openNoteId) : null;   // look the card up again: renderBoard() may have rebuilt it
+    if(note && fwDirty) refreshCard(note);       // only when something changed
+    var card = openNoteId ? findCard(openNoteId) : null;
+    if(card && boardMode === 'masonry' && Math.abs(card.offsetHeight - fwCardH0) > 2) fwStructural = true;   // masonry has to re-balance its columns
+    var to = card ? rectOf(card) : null;
     fwOverlay.classList.remove('on');
     editorPage.classList.remove('on');
-    if(card){                                    // fly back to wherever the card is now
-      var a = card.getBoundingClientRect();
-      fwPlace({l:a.left, t:a.top, w:a.width, h:a.height});
-      card.style.transition = 'opacity 0.35s ease 0.15s'; card.style.opacity = '';
-      fwCloseTimer = setTimeout(fwFinishClose, 520);
-    } else {                                     // card is gone: plain fade
-      editorPage.style.transition = 'opacity 0.25s ease';
-      fwCloseTimer = setTimeout(fwFinishClose, 280);
-    }
+    if(card){ setTimeout(function(){ if(fwClosing){ card.style.transition = 'opacity 0.22s ease'; card.style.opacity = ''; } }, dur(440) * 0.62); }
+    fwRunClose(to, fwFinishClose);
   }
   function forceCloseEditor(){                   // instant (e.g. the open item was deleted)
-    clearTimeout(fwCloseTimer); fwCloseTimer = null;
+    fwStop(); fwClosing = false;
     fwOpen = false; stopRecordingIfActive(); audioPauseIf(openNoteId); setTextTools(false); setFolderPickOpen(false);
     fwOverlay.classList.remove('on');
-    editorPage.classList.remove('vis','on'); editorPage.style.transition = ''; editorPage.style.opacity = '';
-    openNoteId = null;
+    editorPage.classList.remove('vis','on','fw-anim');
+    openNoteId = null; fwPersistAfter = false;
   }
   // the tap that opens a window can produce a late click that lands on the freshly opened window (zoom / record / open link by accident): swallow clicks right after opening
   editorPage.addEventListener('click', function(e){
@@ -3074,19 +3179,12 @@
   function openChild(cid){
     var child = getNote(cid), par = child && parentOf(cid);
     if(!child || !par || !fwOpen || openNoteId !== par.id) return;
-    var card = findCard(cid), a = card ? card.getBoundingClientRect() : null;
-    flushSave();
-    fwIn.style.transition = 'opacity 0.12s ease'; fwIn.style.opacity = '0';
-    setTimeout(function(){
-      if(!fwOpen) return;
+    var card = findCard(cid), from = card ? rectOf(card) : null;
+    fwMorph(function(){
       fwOpenedAt = Date.now();
       loadNoteIntoEditor(cid);
       fwBox = fwTargetBox(child.kind);
-      if(a){ editorPage.style.transition = 'none'; fwPlace({l:a.left, t:a.top, w:a.width, h:a.height}); void editorPage.offsetWidth; editorPage.style.transition = ''; }
-      fwPlace(fwBox);
-      fwIn.style.transition = 'none'; fwIn.style.transform = 'translateY(14px)'; void fwIn.offsetWidth;
-      fwIn.style.transition = ''; fwIn.style.opacity = ''; fwIn.style.transform = '';
-    }, 120);
+    }, null, 0);
   }
   // from an item back to its folder
   function backToFolder(){
@@ -3094,16 +3192,11 @@
     stopRecordingIfActive(); audioPauseIf(openNoteId);
     if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
     setTextTools(false); setFolderPickOpen(false); pwReset();
-    flushSave();
-    fwIn.style.transition = 'opacity 0.12s ease'; fwIn.style.opacity = '0';
-    setTimeout(function(){
-      if(!fwOpen) return;
+    fwMorph(function(){
       fwOpenedAt = Date.now();
       loadNoteIntoEditor(par.id);
-      fwBox = fwTargetBox('folder'); fwPlace(fwBox);
-      fwIn.style.transition = 'none'; fwIn.style.transform = 'translateY(14px)'; void fwIn.offsetWidth;
-      fwIn.style.transition = ''; fwIn.style.opacity = ''; fwIn.style.transform = '';
-    }, 120);
+      fwBox = fwTargetBox('folder');
+    }, null, 0);
   }
   document.getElementById('fwBack').addEventListener('click', backToFolder);
 
@@ -3121,28 +3214,18 @@
   }
 
   function navigateAnimated(direction){
-    if(!fwOpen) return;
+    if(!fwOpen || fwClosing) return;
     var list = currentNavList();
     if(list.length < 2) return;
     var idx = list.findIndex(function(n){ return n.id === openNoteId; });
     if(idx === -1) return;
     var next = list[(idx + direction + list.length) % list.length];
-    fwIn.style.transition = 'opacity 0.14s ease, transform 0.14s ease';
-    fwIn.style.opacity = '0';
-    fwIn.style.transform = 'translateX(' + (direction>0?-26:26) + 'px)';
-    setTimeout(function(){
-      if(!fwOpen) return;
-      flushSave();
-      var prev = getNote(openNoteId); if(prev) refreshCard(prev);
+    fwMorph(function(){
+      var prev = getNote(openNoteId); if(prev && fwDirty) refreshCard(prev);
+      fwOpenedAt = Date.now();
       loadNoteIntoEditor(next.id);                       // hides the new source card, shows the previous one again
-      fwBox = fwTargetBox(next.kind); fwPlace(fwBox);    // window resizes for the new kind
-      fwIn.style.transition = 'none';
-      fwIn.style.transform = 'translateX(' + (direction>0?26:-26) + 'px)';
-      void fwIn.offsetWidth;
-      fwIn.style.transition = 'opacity 0.18s ease, transform 0.18s ease';
-      fwIn.style.opacity = ''; fwIn.style.transform = '';
-      setTimeout(function(){ fwIn.style.transition = ''; }, 200);
-    }, 140);
+      fwBox = fwTargetBox(next.kind);                    // the window resizes for the new kind
+    }, null, direction);
   }
 
   // whole-page gesture: swipe L/R to navigate, swipe U/D to close. Works from anywhere
@@ -3546,7 +3629,7 @@
 
   document.getElementById('pinBtn').addEventListener('click', function(){
     var note = getNote(openNoteId); if(!note) return;
-    note.pinned = !note.pinned;
+    note.pinned = !note.pinned; fwStructural = true;
     if(note.pinned){
       if(!note._prePinX0 && note._prePinX0 !== 0){ /* no-op, position already stable */ }
     } else {
@@ -3556,7 +3639,7 @@
   });
   lockBtn.addEventListener('click', function(){
     var note = getNote(openNoteId); if(!note) return;
-    note.locked = !note.locked; touch(note); scheduleSave(true); updateLockBtn(note);
+    note.locked = !note.locked; fwStructural = true; touch(note); scheduleSave(true); updateLockBtn(note);
   });
 
   function touch(note){ note.updatedAt = Date.now(); fwDirty = true; }
