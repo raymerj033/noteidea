@@ -346,7 +346,6 @@
   .text-tools .hl-chip{ width:20px; height:20px; border-radius:6px; background:#fbf04a; color:#14141c; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
   .text-tools button.on{ background:var(--border); box-shadow:inset 0 0 0 1.5px var(--ink-soft); }
 
-  .photo-display{ width:auto; height:auto; max-width:100%; max-height:min(46vh,420px); display:block; border-radius:26px; margin-bottom:18px; box-shadow:0 20px 50px -18px rgba(0,0,0,0.4); }
   .photo-caption-input{ width:100%; border:none; outline:none; background:transparent; font-size:16px; text-align:center; color:inherit; font-weight:600; }
   .photo-caption-input::placeholder{ color:currentColor; opacity:0.4; }
 
@@ -422,12 +421,6 @@
   .status-bar{ display:none; }
 
   /* ---------------- FULL PHOTO VIEWER ---------------- */
-  .photo-viewer{ position:fixed; inset:0; z-index:350; background:rgba(8,8,8,0.96); display:flex; }
-  .photo-viewer[hidden]{ display:none; }
-  .photo-viewer-stage{ flex:1; overflow:hidden; display:flex; align-items:center; justify-content:center; touch-action:none; cursor:grab; }
-  .photo-viewer-stage img{ max-width:100%; max-height:100%; object-fit:contain; transform-origin:center center; user-select:none; -webkit-user-drag:none; will-change:transform; }
-  .photo-viewer-close{ position:absolute; top:calc(16px + env(safe-area-inset-top,0px)); left:16px; z-index:2; width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,0.16); color:#fff; display:flex; align-items:center; justify-content:center; }
-  .photo-display{ cursor:zoom-in; }
 
   /* ---------------- DRAWING OVERLAY ---------------- */
   .draw-overlay{ position:fixed; inset:0; z-index:400; background:var(--surface); display:flex; flex-direction:column; }
@@ -500,6 +493,135 @@
   .fwin .pill-btn:hover{ background:var(--fw-soft); }
   .fwin .pill-btn[hidden]{ display:none; }
   @media (prefers-reduced-motion:reduce){ .record-btn.recording::before, .record-btn.recording::after{ animation:none; } }
+
+  /* ---- LINK: card chip ---- */
+  .card.kind-link .card-body{ position:relative; justify-content:center; padding:16px 16px 16px 14px; }
+  .card.kind-link .link-row{ gap:12px; }
+  .card.kind-link .link-icon{ width:48px; height:48px; background:var(--ctext); color:var(--cbg); cursor:pointer; transition:transform 0.2s var(--ease), background 0.2s ease; }
+  .card.kind-link .link-icon:before{ display:none; }
+  .card.kind-link .link-icon svg{ color:var(--cbg); width:22px; height:22px; }
+  .card.kind-link .link-icon:hover{ background:var(--hover); transform:scale(1.1) rotate(-8deg); }
+  .card.kind-link .link-icon:hover svg{ color:#fff; }
+  .card.kind-link .link-icon:active{ transform:scale(0.94); }
+  .link-meta{ flex:1; min-width:0; }
+  .link-meta .link-domain{ display:block; letter-spacing:-0.01em; }
+  .link-meta .link-url{ display:block; margin-top:3px; }
+  .card.kind-link .card-footer{ position:absolute; top:8px; right:12px; margin:0; }
+
+  /* ---- LINK: floating window ---- */
+  #linkEditorInner{ margin:auto 0; padding:32px 28px 24px; }
+  #linkEditorInner .link-editor-center{ gap:16px; padding-top:0; }
+  .link-icon-big{ width:96px; height:96px; border:0; border-radius:50%; background:var(--fw-ink); color:var(--fw-bg); cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; transition:transform 0.25s var(--ease), background 0.25s ease, color 0.25s ease; }
+  .link-icon-big:before{ display:none; }
+  .link-icon-big:hover{ background:var(--hover); color:#fff; transform:scale(1.07) rotate(-8deg); }
+  .link-icon-big:active{ transform:scale(0.95); }
+  #linkEditorInner .link-title-input{ max-width:340px; font-size:22px; font-weight:600; letter-spacing:-0.02em; }
+  #linkEditorInner .link-url-input{ max-width:340px; border:1px solid var(--fw-line); border-radius:14px; padding:12px 16px; font-size:14px; opacity:1; transition:border-color 0.2s ease, box-shadow 0.2s ease; }
+  #linkEditorInner .link-url-input:focus{ border-color:var(--hover); box-shadow:0 0 0 4px rgba(91,108,255,0.15); }
+  #linkEditorInner .link-url-input.bad{ border-color:var(--danger); }
+  .link-hint{ font-size:12px; color:var(--danger); min-height:16px; text-align:center; }
+  .fwin .pill-btn.main{ background:var(--fw-ink); color:var(--fw-bg); border-color:var(--fw-ink); }
+  .fwin .pill-btn.main:hover{ background:var(--hover); border-color:var(--hover); color:#fff; }
+
+  /* ---- PHOTO: card (thin frame + rounded photo + dark gradient with the caption) ---- */
+  .card.kind-photo .card-clip{ padding:8px; }
+  .card.kind-photo .card-photo-fill{ border-radius:17px; }
+  .card.kind-photo.auto-size .card-photo-fill img{ height:auto; min-height:190px; max-height:380px; object-fit:cover; }
+  .card-photo-footer, .card-photo-footer:has(.card-badges:empty){ display:flex; align-items:flex-end; justify-content:space-between; gap:8px; padding:40px 14px 12px; background:linear-gradient(transparent, rgba(0,0,0,0.5)); }
+  .card-photo-caption{ position:static; padding:0; flex:1; min-width:0; font-size:13px; font-weight:600; bottom:auto; }
+
+  /* ---- PHOTO: floating window ---- */
+  #photoEditorInner{ height:auto; padding:18px; display:flex; flex-direction:column; align-items:stretch; gap:14px; }
+  .pw-stage{ flex:1; min-height:200px; border-radius:18px; overflow:hidden; background:var(--fw-soft); display:grid; place-items:center; cursor:zoom-in; position:relative; }
+  .pw-stage.z{ cursor:zoom-out; touch-action:none; }
+  .pw-stage img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; transition:transform 0.35s var(--ease); user-select:none; -webkit-user-drag:none; }
+  .pw-stage.panning img{ transition:none; }
+  .pw-stage.drag{ outline:2px dashed var(--hover); outline-offset:-8px; }
+  .pw-bar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:0 4px 2px; }
+  #photoCaptionInput{ flex:1; width:auto; min-width:140px; text-align:left; font-size:20px; font-weight:600; letter-spacing:-0.02em; }
+  .fwin[data-kind="photo"] .fw-x{ top:26px; right:26px; background:rgba(20,20,30,0.5); color:#fff; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+  .fwin[data-kind="photo"] .fw-x:hover{ background:var(--hover); }
+
+  /* ---- FOLDER: card (fan of real mini cards + info strip) ---- */
+  .fold-in{ position:relative; height:230px; padding:16px 18px; overflow:hidden; }
+  .card.sized .fold-in{ height:100%; min-height:190px; }
+  .fold-stack{ position:relative; height:130px; }
+  .mc{ position:absolute; left:50%; bottom:-20px; width:92px; height:118px; margin-left:-46px; border-radius:12px; background:var(--cbg); color:var(--ctext); box-shadow:0 8px 18px -6px rgba(40,50,90,0.35), 0 0 0 1px var(--cborder); padding:9px; overflow:hidden; transform-origin:50% 120%; transition:transform 0.45s var(--ease); }
+  .mc.m1{ transform:translateX(-46px) rotate(-14deg); }
+  .mc.m2{ transform:translateX(46px) rotate(14deg); }
+  .mc.m0{ transform:translateY(-6px); }
+  .card:hover .mc.m1{ transform:translateX(-58px) rotate(-19deg); }
+  .card:hover .mc.m2{ transform:translateX(58px) rotate(19deg); }
+  .card:hover .mc.m0{ transform:translateY(-16px); }
+  .mc.color-pink{ --cbg:var(--card-pink-bg); --ctext:var(--card-pink-text); --cborder:var(--card-pink-border); }
+  .mc.color-lime{ --cbg:var(--card-lime-bg); --ctext:var(--card-lime-text); --cborder:var(--card-lime-border); }
+  .mc.color-sky{  --cbg:var(--card-sky-bg);  --ctext:var(--card-sky-text);  --cborder:var(--card-sky-border); }
+  .mc.color-dark{ --cbg:var(--card-dark-bg); --ctext:var(--card-dark-text); --cborder:var(--card-dark-border); }
+  .mc.mp{ padding:0; }
+  .mc-im{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  .mc-t{ font-size:8.5px; font-weight:700; line-height:1.2; letter-spacing:-0.01em; margin-bottom:4px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .mc-p{ font-size:6.5px; line-height:1.5; opacity:0.7; overflow:hidden; max-height:80px; }
+  .mc-p.big{ font-size:8px; opacity:1; font-weight:500; }
+  .mc-ic{ display:grid; place-items:center; height:70px; }
+  .mc-ic svg{ width:26px; height:26px; }
+  .mc-lb{ font-size:7px; text-align:center; opacity:0.75; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .mc.empty{ display:grid; place-items:center; font-size:10px; opacity:0.7; }
+  .fold-info{ position:absolute; left:0; right:0; bottom:0; height:76px; padding:0 18px; display:flex; align-items:center; gap:12px; background:var(--cbg); box-shadow:0 -10px 18px -6px var(--cbg); }
+  .fold-ico{ width:38px; height:38px; border-radius:12px; background:var(--ctext); color:var(--cbg); display:grid; place-items:center; flex:none; }
+  .fold-txt{ flex:1; min-width:0; }
+  .fold-txt b{ display:block; font-size:15px; letter-spacing:-0.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .fold-txt small{ font-size:12px; opacity:0.6; }
+  .fold-del{ position:absolute; top:12px; right:12px; width:32px; height:32px; border-radius:50%; border:0; background:rgba(128,128,128,0.16); color:var(--ctext); display:grid; place-items:center; cursor:pointer; z-index:3; padding:0; opacity:0; transform:scale(0.8); transition:opacity 0.2s ease, transform 0.2s ease, background 0.2s ease, color 0.2s ease; }
+  .card:hover .fold-del, .fold-del:focus-visible{ opacity:1; transform:none; }
+  @media (hover:none){ .fold-del{ opacity:1; transform:none; } }
+  .fold-del:hover{ background:var(--danger); color:#fff; }
+
+  /* ---- FOLDER: floating window ---- */
+  #folderEditorInner{ height:auto; min-height:0; padding:0; max-width:none; display:flex; flex-direction:column; }
+  .fold-head{ padding:26px 30px 14px; display:flex; align-items:center; gap:14px; }
+  .is-child #folderEditorInner{ padding-top:0; }
+  .fold-name{ flex:1; min-width:0; border:0; background:none; outline:none; font-size:clamp(26px,5vw,38px); font-weight:700; letter-spacing:-0.03em; color:inherit; font-family:inherit; padding:0; }
+  .fold-name::placeholder{ color:currentColor; opacity:0.28; }
+  .fold-cnt{ font-size:13px; color:var(--fw-mute); white-space:nowrap; margin-right:44px; }
+  .fgrid{ flex:1; min-height:0; overflow:auto; padding:6px 30px 120px; columns:220px; column-gap:14px; scrollbar-width:none; -ms-overflow-style:none; overscroll-behavior:contain; }
+  .fgrid::-webkit-scrollbar{ display:none; }
+  .fgrid .card{ position:relative; width:100%; display:flex; break-inside:avoid; margin-bottom:14px; cursor:pointer; animation:fpop 0.4s var(--ease) both; }
+  @keyframes fpop{ from{ opacity:0; transform:scale(0.9) translateY(10px); } }
+  .fgrid .card-clip{ animation:none; box-shadow:0 8px 22px -10px rgba(40,50,90,0.35); }
+  .fgrid .card.kind-photo.auto-size .card-photo-fill img{ max-height:300px; min-height:120px; }
+  .fgrid .card .fx{ position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%; border:0; background:rgba(20,20,30,0.55); color:#fff; display:grid; place-items:center; padding:0; cursor:pointer; opacity:0; transition:opacity 0.2s ease, background 0.2s ease; z-index:4; }
+  .fgrid .card:hover .fx, .fgrid .card .fx:focus-visible{ opacity:1; }
+  @media (hover:none){ .fgrid .card .fx{ opacity:1; } }
+  .fgrid .card .fx:hover{ background:var(--danger); }
+  .femp{ column-span:all; text-align:center; color:var(--fw-mute); font-size:14px; padding:60px 0; line-height:1.6; }
+  .fadd{ position:absolute; right:24px; bottom:72px; display:flex; flex-direction:column; align-items:flex-end; gap:10px; z-index:4; }
+  .fmenu{ display:flex; flex-direction:column; gap:2px; padding:6px; background:var(--fw-bg); border-radius:22px; box-shadow:var(--float-sh), 0 0 0 1px var(--fw-line); transform-origin:100% 100%; opacity:0; transform:translateY(14px) scale(0.9); pointer-events:none; transition:opacity 0.2s ease, transform 0.3s var(--ease); }
+  .fadd.open .fmenu{ opacity:1; transform:none; pointer-events:auto; }
+  .fmenu button{ display:flex; align-items:center; gap:12px; border:0; background:none; color:inherit; font-size:14px; font-weight:500; padding:8px 20px 8px 8px; border-radius:16px; cursor:pointer; white-space:nowrap; opacity:0; transform:translateY(10px); transition:opacity 0.25s ease, transform 0.3s var(--ease), background 0.2s ease; }
+  .fadd.open .fmenu button{ opacity:1; transform:none; transition-delay:calc(var(--i)*45ms), calc(var(--i)*45ms), 0s; }
+  .fmenu button:hover{ background:var(--fw-soft); }
+  .fmi{ width:32px; height:32px; border-radius:50%; background:var(--fw-ink); color:var(--fw-bg); display:grid; place-items:center; flex:none; transition:background 0.2s ease, transform 0.2s ease; }
+  .fmenu button:hover .fmi{ background:var(--hover); color:#fff; transform:rotate(-8deg) scale(1.08); }
+  .fplus{ width:54px; height:54px; border-radius:50%; border:0; background:var(--fw-ink); color:var(--fw-bg); display:grid; place-items:center; cursor:pointer; padding:0; box-shadow:var(--float-sh); transition:transform 0.35s var(--ease), background 0.2s ease, color 0.2s ease; }
+  .fplus:hover{ background:var(--hover); color:#fff; transform:scale(1.07); }
+  .fadd.open .fplus{ transform:rotate(135deg); background:var(--hover); color:#fff; }
+
+  /* back pill (only for an item opened from inside a folder) */
+  .fw-back{ display:none; position:absolute; top:16px; left:16px; height:34px; padding:0 14px 0 9px; align-items:center; gap:4px; border:0; border-radius:999px; background:var(--fw-soft); color:inherit; font-size:13px; font-weight:600; z-index:6; max-width:55%; cursor:pointer; transition:background 0.2s ease, color 0.2s ease; }
+  .fw-back span{ overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .fw-back:hover{ background:var(--hover); color:#fff; }
+  .fwin.is-child .fw-back{ display:flex; }
+  .fwin.is-child #noteEditorInner{ padding-top:68px; }
+  .fwin.is-child #quickEditorInner{ padding-top:62px; }
+  .fwin.is-child #photoEditorInner{ padding-top:62px; }
+  .fwin[data-kind="photo"] .fw-back{ background:rgba(20,20,30,0.5); color:#fff; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); top:26px; left:26px; }
+  .fwin[data-kind="photo"].is-child .fw-x{ top:26px; }
+
+  /* delete confirmation over a blurred background */
+  .modal-overlay.blur{ -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  .modal-btn.cancel:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+  .toast:not([hidden]){ cursor:pointer; }
+  #folderCircleBtn[hidden]{ display:none !important; }
 </style>
 </head>
 <body>
@@ -593,6 +715,10 @@
           <span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-5-9 9"/></svg></span>
           Photo / GIF
         </button>
+        <button data-action="new-folder-item">
+          <span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+          Folder
+        </button>
         <button data-action="new-audio">
           <span class="fm-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg></span>
           Audio
@@ -621,6 +747,9 @@
     <button class="fw-x" id="closeBtn" title="Close" aria-label="Close">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
+    <button class="fw-back" id="fwBack" title="Back to folder" aria-label="Back to folder">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg><span id="fwBackName"></span>
+    </button>
     <div class="fw-in" id="fwIn">
     <div class="editor-scroll">
       <!-- NOTE editor -->
@@ -636,11 +765,33 @@
 
       <!-- PHOTO editor -->
       <div class="editor-inner photo-mode" id="photoEditorInner" hidden>
-        <img class="photo-display" id="photoDisplay" src="" alt="" style="margin-top:14px;">
-        <input type="text" class="photo-caption-input" id="photoCaptionInput" placeholder="Add a caption…" maxlength="140">
+        <div class="pw-stage" id="photoStage"><img id="photoDisplay" src="" alt="" draggable="false"></div>
+        <div class="pw-bar">
+          <input type="text" class="photo-caption-input" id="photoCaptionInput" placeholder="Add a caption…" maxlength="140" spellcheck="false">
+          <button class="pill-btn" id="photoChangeBtn">Change image</button>
+          <button class="pill-btn" id="photoDownloadBtn">Download</button>
+        </div>
+        <input type="file" id="photoReplaceInput" accept="image/*,.gif" hidden>
       </div>
 
       <!-- AUDIO editor -->
+      <div class="editor-inner fold-panel" id="folderEditorInner" hidden>
+        <div class="fold-head">
+          <input type="text" class="fold-name" id="folderNameInput" placeholder="Folder name" maxlength="40" spellcheck="false">
+          <span class="fold-cnt" id="folderCount"></span>
+        </div>
+        <div class="fgrid" id="folderGrid"></div>
+        <div class="fadd" id="folderAdd">
+          <div class="fmenu" id="folderMenu">
+            <button data-add="note" style="--i:3"><span class="fmi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg></span>Note</button>
+            <button data-add="link" style="--i:2"><span class="fmi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg></span>Link</button>
+            <button data-add="audio" style="--i:1"><span class="fmi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>Audio</button>
+            <button data-add="image" style="--i:0"><span class="fmi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg></span>Image</button>
+          </div>
+          <button class="fplus" id="folderPlus" aria-label="Add to folder" aria-expanded="false"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        </div>
+        <input type="file" id="folderImageInput" accept="image/*,.gif" hidden>
+      </div>
       <div class="editor-inner audio-mode" id="audioEditorInner" hidden>
         <div class="audio-editor-center">
           <button class="record-btn" id="recordBtn" title="Record" aria-label="Record"></button>
@@ -657,12 +808,16 @@
       <!-- LINK editor -->
       <div class="editor-inner link-mode" id="linkEditorInner" hidden>
         <div class="link-editor-center">
-          <button class="link-icon-big" id="linkIconBig" title="Open link" style="cursor:pointer;">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1.5-1.5"/></svg>
+          <button class="link-icon-big" id="linkIconBig" title="Open link" aria-label="Open link">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>
           </button>
-          <input type="text" class="link-title-input" id="linkTitleInput" placeholder="Label this link…" maxlength="140">
-          <input type="text" class="link-url-input" id="linkUrlInput" placeholder="https://…">
-          <button class="pill-btn" id="linkVisitBtn">Open link ↗</button>
+          <input type="text" class="link-title-input" id="linkTitleInput" placeholder="Label this link…" maxlength="140" spellcheck="false">
+          <input type="text" class="link-url-input" id="linkUrlInput" placeholder="https://…" spellcheck="false" autocapitalize="off" autocorrect="off" inputmode="url">
+          <div class="link-hint" id="linkHint" aria-live="polite"></div>
+          <div class="audio-actions-row">
+            <button class="pill-btn main" id="linkVisitBtn">Open link ↗</button>
+            <button class="pill-btn" id="linkCopyBtn">Copy</button>
+          </div>
         </div>
       </div>
     </div>
@@ -709,16 +864,6 @@
     </div>
 
   <div id="safeProbe" aria-hidden="true"></div>
-
-  <!-- FULL PHOTO VIEWER -->
-  <div class="photo-viewer" id="photoViewer" hidden>
-    <button class="photo-viewer-close" id="photoViewerClose" title="Close">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-    <div class="photo-viewer-stage" id="photoViewerStage">
-      <img id="photoViewerImg" src="" alt="" draggable="false">
-    </div>
-  </div>
 
   <!-- DRAWING OVERLAY -->
   <div class="draw-overlay" id="drawOverlay" hidden>
@@ -809,6 +954,7 @@
     var col = 0, row = 0;
     notes.forEach(function(n){
       if(!n.kind) n.kind = 'note';
+      if(n.kind === 'folder' && !Array.isArray(n.items)) n.items = [];
       if(typeof n.x !== 'number'){ n.x = (col%5)*236 - 470; n.y = row*210 - 210; col++; if(col>4){col=0; row++;} }
       if(typeof n.rot !== 'number') n.rot = Math.round((Math.random()*6-3)*10)/10;
       if(!n.color) n.color = 'paper';
@@ -910,7 +1056,8 @@
     if(kind==='quick') return {w:190,h:150};
     if(kind==='photo') return {w:220,h:220};
     if(kind==='audio') return {w:270,h:96};
-    if(kind==='link') return {w:206,h:120};
+    if(kind==='link') return {w:270,h:96};
+    if(kind==='folder') return {w:270,h:230};
     return {w:210,h:260};
   }
 
@@ -984,7 +1131,22 @@
     return !!d.querySelector('audio');
   }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-  function getNote(id){ for(var i=0;i<notes.length;i++) if(notes[i].id===id) return notes[i]; return null; }
+  // items inside a folder are full note objects stored in folder.items, so every editor function finds them by id too
+  function getNote(id){
+    for(var i=0;i<notes.length;i++){
+      if(notes[i].id===id) return notes[i];
+      var its = notes[i].kind === 'folder' ? notes[i].items : null;
+      if(its) for(var j=0;j<its.length;j++) if(its[j].id===id) return its[j];
+    }
+    return null;
+  }
+  function parentOf(id){
+    for(var i=0;i<notes.length;i++){
+      var its = notes[i].kind === 'folder' ? notes[i].items : null;
+      if(its) for(var j=0;j<its.length;j++) if(its[j].id===id) return notes[i];
+    }
+    return null;
+  }
   function getFolder(id){ for(var i=0;i<folders.length;i++) if(folders[i].id===id) return folders[i]; return null; }
   function domainFromUrl(url){
     try{ var u = new URL(url); return u.hostname.replace(/^www\./,''); }catch(e){ return url; }
@@ -1150,8 +1312,18 @@
     if(boardMode === 'free'){ boardInner.style.zoom = boardZoom; }
     else { boardInner.style.zoom = ''; }
   }
+  // links: add https:// when missing, accept only http(s) with a real host; returns a URL object or null
+  function normUrl(v){
+    v = String(v || '').trim(); if(!v) return null;
+    if(!/^[a-z][a-z0-9+.-]*:\/\//i.test(v)) v = 'https://' + v;
+    try{
+      var u = new URL(v);
+      return (/^https?:$/.test(u.protocol) && (u.hostname.indexOf('.') > -1 || u.hostname === 'localhost')) ? u : null;
+    }catch(e){ return null; }
+  }
+  function openLinkUrl(v){ var u = normUrl(v); if(!u) return false; window.open(u.href, '_blank', 'noopener'); return true; }
   // a note is always the plain white "paper"; only quick notes (and the other kinds) use the card colour
-  function cardColor(n){ return n.kind === 'note' ? 'paper' : (n.color || 'paper'); }
+  function cardColor(n){ return (n.kind === 'note' || n.kind === 'folder') ? 'paper' : (n.color || 'paper'); }
   // readable preview of a note body: keeps headings, bullets, bold/italic and yellow highlights; drops images/audio
   function previewHTML(html){
     var d = document.createElement('div'); d.innerHTML = html || '';
@@ -1210,7 +1382,43 @@
       p.classList.toggle('clipped', p.scrollHeight > p.clientHeight + 2);
     });
   }
+  var FOLDER_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+  var TRASH_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
+  function itemsLabel(c){ return c === 1 ? '1 item' : c + ' items'; }
+  // real mini preview of an item for the fan on the folder card
+  function miniHTML(it, pos){
+    var cls = 'mc m' + pos + ' color-' + cardColor(it), inner = '';
+    if(it.kind === 'photo' && it.image){ return '<div class="'+cls+' mp"><img class="mc-im" src="'+it.image+'" alt="" draggable="false"></div>'; }
+    if(it.kind === 'note'){
+      var t = (it.title||'').trim(), p = htmlToTextPreserveBreaks(it.body||'').replace(/\s+/g,' ').slice(0,110);
+      inner = '<div class="mc-t">'+escapeHtml(t || 'Untitled note')+'</div><div class="mc-p">'+escapeHtml(p)+'</div>';
+    } else if(it.kind === 'quick'){
+      inner = '<div class="mc-p big">'+escapeHtml(htmlToTextPreserveBreaks(it.body||'').replace(/\s+/g,' ').slice(0,90))+'</div>';
+    } else if(it.kind === 'link'){
+      var u = normUrl(it.url), lab = (it.title||'').trim() || (u ? u.hostname.replace(/^www\./,'') : 'Link');
+      inner = '<div class="mc-ic">'+linkIconSmall+'</div><div class="mc-lb">'+escapeHtml(lab)+'</div>';
+    } else if(it.kind === 'audio'){
+      inner = '<div class="mc-ic">'+AIC.mic(24)+'</div><div class="mc-lb">'+escapeHtml((it.title||'').trim() || 'Audio note')+'</div>';
+    } else { inner = '<div class="mc-t">'+escapeHtml((it.title||'').trim() || it.kind)+'</div>'; }
+    return '<div class="'+cls+'">'+inner+'</div>';
+  }
+  function folderCardHTML(n){
+    var items = n.items || [], c = items.length, name = (n.title||'').trim() || 'Folder';
+    var minis = c ? items.slice(0,3).map(function(it, i){ return miniHTML(it, i); }).reverse().join('') : '<div class="mc m0 empty">Empty</div>';
+    var badges = (n.locked&&boardMode==='free'?lockSvgSmall:'') + (n.pinned?pinSvg:'');
+    return '<div class="fold-in"><button class="fold-del" data-fold-del="'+n.id+'" aria-label="Delete folder" title="Delete folder">'+TRASH_ICON+'</button>'+
+      '<div class="fold-stack">'+minis+'</div>'+
+      '<div class="fold-info"><div class="fold-ico">'+FOLDER_ICON+'</div><div class="fold-txt"><b>'+escapeHtml(name)+'</b><small>'+itemsLabel(c)+'</small></div><span class="card-badges">'+badges+'</span></div></div>';
+  }
+  // trash button on the card: asks first, never opens the folder, never starts a drag
+  function wireFolderCard(card, n){
+    if(n.kind !== 'folder') return;
+    var btn = card.querySelector('.fold-del'); if(!btn) return;
+    ['pointerdown','pointerup'].forEach(function(evt){ btn.addEventListener(evt, function(e){ e.stopPropagation(); }); });
+    btn.addEventListener('click', function(e){ e.stopPropagation(); askDeleteFolderItem(n.id); });
+  }
   function cardBodyHTML(n){
+    if(n.kind === 'folder') return folderCardHTML(n);
     if(n.kind === 'audio'){
       var label = (n.title||'').trim();
       var iconHtml = n.audio
@@ -1222,8 +1430,9 @@
         '<div class="card-footer"><span></span><span class="card-badges">'+(n.locked&&boardMode==='free'?lockSvgSmall:'')+(n.pinned?pinSvg:'')+'</span></div></div>';
     }
     if(n.kind === 'link'){
-      var lt = (n.title||'').trim() || domainFromUrl(n.url||'');
-      return '<div class="card-body"><div class="link-row"><button class="link-icon" data-link-id="'+n.id+'" title="Open link">'+linkIconSmall+'</button><div style="min-width:0;overflow:hidden;"><div class="link-domain">'+escapeHtml(lt)+'</div><div class="link-url">'+escapeHtml(n.url||'')+'</div></div></div>'+
+      var lu = normUrl(n.url), lt = (n.title||'').trim() || (lu ? lu.hostname.replace(/^www\./,'') : domainFromUrl(n.url||'')) || 'Link';
+      return '<div class="card-body"><div class="link-row"><button class="link-icon" data-link-id="'+n.id+'" aria-label="Open link">'+linkIconSmall+'</button>'+
+        '<div class="link-meta"><b class="link-domain">'+escapeHtml(lt)+'</b><small class="link-url">'+escapeHtml(lu ? lu.href : (n.url||'No URL'))+'</small></div></div>'+
         '<div class="card-footer"><span></span><span class="card-badges">'+(n.locked&&boardMode==='free'?lockSvgSmall:'')+(n.pinned?pinSvg:'')+'</span></div></div>';
     }
     if(n.kind === 'quick'){
@@ -1248,9 +1457,8 @@
   function photoInnerHTML(n){
     var badges = (n.locked&&boardMode==='free'?lockSvgSmall:'') + (n.pinned?pinSvg:'');
     var caption = (n.title||'').trim();
-    return '<div class="card-photo-fill"><img src="'+n.image+'" alt="">'+
-      (caption?'<div class="card-photo-caption">'+escapeHtml(caption)+'</div>':'')+
-      '<div class="card-photo-footer"><span></span><span class="card-badges">'+badges+'</span></div></div>';
+    return '<div class="card-photo-fill"><img src="'+n.image+'" alt="" draggable="false">'+
+      '<div class="card-photo-footer"><span class="card-photo-caption">'+(caption?escapeHtml(caption):'')+'</span><span class="card-badges">'+badges+'</span></div></div>';
   }
 
   function renderBoard(){
@@ -1319,6 +1527,7 @@
       }
       wireAudioPlayButton(card, n);
       wireLinkOpen(card, n);
+      wireFolderCard(card, n);
       if(boardMode === 'masonry') masonryCards.push(card); else boardInner.appendChild(card);
     });
 
@@ -1341,10 +1550,15 @@
     if(n.kind !== 'link') return;
     var btn = card.querySelector('.link-icon[data-link-id]');
     if(!btn) return;
-    ['pointerdown','pointerup','click'].forEach(function(evt){
-      btn.addEventListener(evt, function(e){ e.stopPropagation(); });
+    function valid(){ var cur = getNote(n.id) || n; return !!normUrl(cur.url); }
+    ['pointerdown','pointerup'].forEach(function(evt){
+      btn.addEventListener(evt, function(e){ if(valid()) e.stopPropagation(); });
     });
-    btn.addEventListener('click', function(){ if(n.url) window.open(n.url, '_blank'); });
+    btn.addEventListener('click', function(e){
+      if(!valid()) return;                       // nothing to open yet: let the click open the window so the URL can be typed
+      e.stopPropagation();
+      openLinkUrl((getNote(n.id) || n).url);
+    });
   }
 
   // ---------- AUDIO: one shared player for the card circle and the floating window ----------
@@ -1512,16 +1726,16 @@
   function audioPauseIf(id){ if(currentAudioEl && currentAudioNoteId === id && !currentAudioEl.paused){ currentAudioEl.pause(); paintAudio(); } }
   // repaint every audio card (play icon, mini wave, duration) and the window
   function paintAudio(){
-    Array.prototype.forEach.call(boardInner.querySelectorAll('.audio-play-btn'), function(btn){
+    Array.prototype.forEach.call(document.querySelectorAll('.card .audio-play-btn'), function(btn){
       var st = audioIsPlaying(btn.getAttribute('data-audio-id')) ? 'pause' : 'play';
       if(btn.getAttribute('data-st') !== st){ btn.setAttribute('data-st', st); btn.innerHTML = AIC[st](20); }
     });
-    Array.prototype.forEach.call(boardInner.querySelectorAll('.aw'), function(el){
+    Array.prototype.forEach.call(document.querySelectorAll('.card .aw'), function(el){
       var id = el.getAttribute('data-aw'), info = audioInfo[id], cur = (currentAudioNoteId === id && currentAudioEl) ? currentAudioEl.currentTime : 0;
       audBars(el, 20);
       audDraw(el, info ? info.peaks : [], (info && info.dur && cur > 0) ? cur/info.dur : -1);
     });
-    Array.prototype.forEach.call(boardInner.querySelectorAll('.adur'), function(el){
+    Array.prototype.forEach.call(document.querySelectorAll('.card .adur'), function(el){
       var info = audioInfo[el.getAttribute('data-adur')]; el.textContent = fmtT(info ? info.dur : 0);
     });
     audioWinRender();
@@ -1572,12 +1786,16 @@
 
   // the card an open window came from stays in the DOM with opacity:0 (so its rect can still be measured)
   function hideSourceCard(id){
+    var par = id ? parentOf(id) : null; if(par) id = par.id;      // a window opened from inside a folder came from the folder's card
     Array.prototype.forEach.call(boardInner.querySelectorAll('.card[data-note-id]'), function(el){
       if(id && el.getAttribute('data-note-id') === id){ el.style.transition = 'none'; el.style.opacity = '0'; }
       else { el.style.opacity = ''; }
     });
   }
-  function findCard(id){ return boardInner.querySelector('.card[data-note-id="'+id+'"]'); }
+  function findCard(id){
+    var sel = '.card[data-note-id="'+id+'"]', g = document.getElementById('folderGrid');
+    return boardInner.querySelector(sel) || (g && g.querySelector(sel)) || null;
+  }
   // live preview: repaint just one card (used while its window is open) instead of rebuilding the whole board
   function refreshCard(n){
     var el = findCard(n.id); if(!el) return;
@@ -1587,7 +1805,7 @@
     (swipe || clip).innerHTML = html;
     COLORS.forEach(function(c){ el.classList.remove('color-'+c); });
     el.classList.add('color-' + cardColor(n));
-    wireAudioPlayButton(el, n); wireLinkOpen(el, n);
+    wireAudioPlayButton(el, n); wireLinkOpen(el, n); wireFolderCard(el, n);
     markPreviews(el);
   }
 
@@ -2300,6 +2518,7 @@
     else if(action === 'new-quick'){ setFabMenu(false); createItem('quick'); }
     else if(action === 'new-photo'){ setFabMenu(false); triggerPhotoCreate(); }
     else if(action === 'new-audio'){ setFabMenu(false); createItem('audio'); }
+    else if(action === 'new-folder-item'){ setFabMenu(false); createItem('folder'); }
     else if(action === 'paste'){ setFabMenu(false); pasteFromClipboard(); }
     else if(action === 'new-link'){
       newLinkMenuBtn.innerHTML = '<input type="text" class="new-folder-input" id="fabLinkInput" placeholder="Paste a URL">';
@@ -2357,6 +2576,7 @@
       x: pos.x, y: pos.y, rot: Math.round((Math.random()*6-3)*10)/10,
       w: size.w, h: size.h, sized: false, color: 'paper', image: null, audio: null, url:null, z: ++zTop
     };
+    if(kind === 'folder'){ item.title = 'New folder'; item.items = []; }
     lastNewCenter = { id:item.id, cx:pos.cx, cy:pos.cy, nudge:pos.nudge }; // not saved with the note
     return item;
   }
@@ -2480,12 +2700,13 @@
   var linkUrlInput = document.getElementById('linkUrlInput');
 
   function isInteractiveTarget(el){
-    return !!(el.closest && el.closest('input, select, textarea, button, [contenteditable="true"], audio, a, .swatch, .aud-wave'));
+    return !!(el.closest && el.closest('input, select, textarea, button, [contenteditable="true"], audio, a, .swatch, .aud-wave, .pw-stage, .fold-panel'));
   }
 
   function applyEditorColor(note){
     COLORS.forEach(function(c){ editorPage.classList.remove('color-'+c); });
     editorPage.classList.add('color-' + cardColor(note));
+    editorPage.setAttribute('data-kind', note.kind);
   }
 
   function renderSwatches(note){
@@ -2556,11 +2777,13 @@
     photoEditorInner.hidden = kind !== 'photo';
     audioEditorInner.hidden = kind !== 'audio';
     linkEditorInner.hidden = kind !== 'link';
+    document.getElementById('folderEditorInner').hidden = kind !== 'folder';
     if(kind !== 'note') setTextTools(false);
   }
 
   function currentNavList(){
-    return notes.filter(matchesFilter);
+    var par = parentOf(openNoteId);
+    return par ? par.items.slice() : notes.filter(matchesFilter);
   }
 
   function loadNoteIntoEditor(id){
@@ -2577,7 +2800,11 @@
     updatePinBtn(note);
     updateLockBtn(note);
     showKindPanels(note.kind);
-    document.getElementById('swatchRow').hidden = (note.kind === 'note');   // notes are always white: no colour dots
+    document.getElementById('swatchRow').hidden = (note.kind === 'note' || note.kind === 'folder');
+    var par = parentOf(id);
+    editorPage.classList.toggle('is-child', !!par);
+    document.getElementById('fwBackName').textContent = par ? ((par.title||'').trim() || 'Folder') : '';
+    folderCircleBtn.hidden = !!par;      // categories are for board items, not for items inside a folder   // notes are always white: no colour dots
 
     if(note.kind === 'note'){
       titleInput.value = note.title || '';
@@ -2587,11 +2814,15 @@
     } else if(note.kind === 'photo'){
       photoDisplay.src = note.image || '';
       photoCaptionInput.value = note.title || '';
+      pwReset();
     } else if(note.kind === 'audio'){
       resetAudioUI(note);
+    } else if(note.kind === 'folder'){
+      renderFolderPanel(note);
     } else if(note.kind === 'link'){
       linkTitleInput.value = note.title || '';
       linkUrlInput.value = note.url || '';
+      linkHint.textContent = ''; syncLinkUrlState();
     }
   }
 
@@ -2599,7 +2830,7 @@
   var fwOverlay = document.getElementById('fwOverlay');
   var safeProbe = document.getElementById('safeProbe');
   var fwIn = document.getElementById('fwIn');
-  var FW_MAX = { note:{w:680,h:9999}, quick:{w:680,h:440}, audio:{w:460,h:470}, link:{w:460,h:420}, photo:{w:720,h:680}, folder:{w:780,h:600} };
+  var FW_MAX = { note:{w:680,h:9999}, quick:{w:680,h:440}, audio:{w:460,h:470}, link:{w:460,h:440}, photo:{w:720,h:680}, folder:{w:780,h:600} };
   // final size + position: capped per kind, limited by the visible screen (keyboard-aware via visualViewport) and the safe areas
   function fwTargetBox(kind){
     var m = FW_MAX[kind] || FW_MAX.note, cs = getComputedStyle(safeProbe);
@@ -2656,17 +2887,24 @@
       var o = {preventScroll:true};
       if(note.kind==='note'){ if(!note.title) titleInput.focus(o); else bodyEl.focus(o); }
       else if(note.kind==='quick'){ quickInput.focus(o); }
-      else if(note.kind==='photo'){ photoCaptionInput.focus(o); }
+
     }, 380);
   }
 
-  function closeEditor(){
+  // closeEditor(): closes the window — but from an item inside a folder it goes back to the folder; closeEditor(true) closes everything
+  function closeEditor(all){
     if(!fwOpen) return;
+    var par = parentOf(openNoteId);
+    if(par && !all){ backToFolder(); return; }
+    if(par){                                       // leaving from inside an item: save it, then fly back to the FOLDER's card
+      stopRecordingIfActive(); audioPauseIf(openNoteId); pwReset();
+      flushSave(); openNoteId = par.id;
+    }
     fwOpen = false;
     stopRecordingIfActive();
     audioPauseIf(openNoteId);                    // if it was playing, pause it
     if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    setTextTools(false); setFolderPickOpen(false);
+    setTextTools(false); setFolderPickOpen(false); pwReset();
     flushSave();                                 // same save the old editor relied on
     var note = getNote(openNoteId);
     if(note) refreshCard(note);
@@ -2690,8 +2928,161 @@
     editorPage.classList.remove('vis','on'); editorPage.style.transition = ''; editorPage.style.opacity = '';
     openNoteId = null;
   }
-  document.getElementById('closeBtn').addEventListener('click', closeEditor);
-  fwOverlay.addEventListener('click', function(){ if(Date.now() - fwOpenedAt > 350) closeEditor(); });
+  // the tap that opens a window can produce a late click that lands on the freshly opened window (zoom / record / open link by accident): swallow clicks right after opening
+  editorPage.addEventListener('click', function(e){
+    if(fwOpen && Date.now() - fwOpenedAt < 450){ e.stopPropagation(); e.preventDefault(); }
+  }, true);
+  document.getElementById('closeBtn').addEventListener('click', function(){ closeEditor(); });
+  fwOverlay.addEventListener('click', function(){ if(Date.now() - fwOpenedAt > 350) closeEditor(true); });
+
+  // ---------- FOLDER WINDOW ----------
+  var folderGrid = document.getElementById('folderGrid'), folderNameInput = document.getElementById('folderNameInput');
+  var folderAdd = document.getElementById('folderAdd'), folderPlus = document.getElementById('folderPlus');
+  var folderImageInput = document.getElementById('folderImageInput'), lastRemoved = null, lastRemovedTimer = 0;
+  function setFolderMenu(v){ folderAdd.classList.toggle('open', v); folderPlus.setAttribute('aria-expanded', v ? 'true' : 'false'); }
+  function folderMenuOpen(){ return folderAdd.classList.contains('open'); }
+  function buildChildCard(it){
+    var card = document.createElement('div');
+    card.setAttribute('data-note-id', it.id);
+    card.className = 'card kind-' + it.kind + ' color-' + cardColor(it) + ' auto-size';
+    var clip = document.createElement('div');
+    clip.className = 'card-clip';
+    clip.innerHTML = it.kind === 'photo' ? photoInnerHTML(it) : cardBodyHTML(it);
+    card.appendChild(clip);
+    var x = document.createElement('button');
+    x.className = 'fx'; x.setAttribute('aria-label', 'Remove from folder'); x.title = 'Remove from folder';
+    x.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    ['pointerdown','pointerup'].forEach(function(evt){ x.addEventListener(evt, function(e){ e.stopPropagation(); }); });
+    x.addEventListener('click', function(e){ e.stopPropagation(); removeFromFolder(it.id); });
+    card.appendChild(x);
+    card.addEventListener('click', function(){ openChild(it.id); });
+    wireAudioPlayButton(card, it); wireLinkOpen(card, it);
+    return card;
+  }
+  function renderFolderGrid(par){
+    folderGrid.innerHTML = '';
+    var items = par.items || [];
+    if(!items.length){ folderGrid.innerHTML = '<div class="femp">This folder is empty.<br>Add something with the + button.</div>'; }
+    items.forEach(function(it, i){ var c = buildChildCard(it); c.style.animationDelay = Math.min(i*30, 240) + 'ms'; folderGrid.appendChild(c); });
+    document.getElementById('folderCount').textContent = itemsLabel(items.length);
+    markPreviews(folderGrid); paintAudio();
+  }
+  function renderFolderPanel(par){
+    folderNameInput.value = par.title || '';
+    setFolderMenu(false);
+    renderFolderGrid(par);
+    folderGrid.scrollTop = 0;
+  }
+  folderNameInput.addEventListener('input', function(){
+    var par = getNote(openNoteId); if(!par || par.kind !== 'folder') return;
+    par.title = folderNameInput.value; touch(par); scheduleSave();
+  });
+  folderNameInput.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); folderNameInput.blur(); } });
+  folderPlus.addEventListener('click', function(){ setFolderMenu(!folderMenuOpen()); });
+  document.getElementById('folderEditorInner').addEventListener('click', function(e){ if(!e.target.closest('.fadd')) setFolderMenu(false); });
+
+  function addToFolder(kind, init){
+    var par = getNote(openNoteId); if(!par || par.kind !== 'folder') return;
+    var it = baseNewItem(kind);                 // same creation logic as the board...
+    it.folderId = null; lastNewCenter = null;   // ...but it lives inside the folder, not on the canvas
+    if(init) init(it);
+    par.items.unshift(it); touch(par); persistNotes();
+    renderFolderGrid(par);
+    folderGrid.scrollTop = 0;
+    setFolderMenu(false);
+    openChild(it.id);
+  }
+  document.getElementById('folderMenu').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-add]'); if(!b) return;
+    var a = b.getAttribute('data-add');
+    if(a === 'note') addToFolder('note');
+    else if(a === 'link') addToFolder('link', function(it){ it.url = ''; });
+    else if(a === 'audio') addToFolder('audio');
+    else if(a === 'image'){ setFolderMenu(false); folderImageInput.click(); }
+  });
+  folderImageInput.addEventListener('change', function(){
+    var file = folderImageInput.files && folderImageInput.files[0]; folderImageInput.value = '';
+    if(!file) return;
+    var pid = openNoteId;
+    readImageSmart(file, function(dataUrl){
+      if(!fwOpen || openNoteId !== pid) { var p = getNote(pid); if(!p) return; }
+      var par = getNote(pid); if(!par || par.kind !== 'folder') return;
+      var it = baseNewItem('photo'); it.folderId = null; lastNewCenter = null; it.image = dataUrl;
+      par.items.unshift(it); touch(par); persistNotes();
+      if(fwOpen && openNoteId === pid){ renderFolderGrid(par); openChild(it.id); } else refreshCard(par);
+    });
+  });
+
+  // take an item out of the folder (with a short undo)
+  function removeFromFolder(id){
+    var par = parentOf(id); if(!par) return;
+    var i = par.items.findIndex(function(x){ return x.id === id; });
+    audioPauseIf(id);
+    var it = par.items.splice(i, 1)[0];
+    lastRemoved = { pid:par.id, item:it, index:i };
+    touch(par); persistNotes();
+    if(fwOpen && openNoteId === par.id) renderFolderGrid(par);
+    showToast('Removed from folder — tap to undo', true);
+    clearTimeout(lastRemovedTimer); lastRemovedTimer = setTimeout(function(){ lastRemoved = null; }, 4600);
+  }
+  document.getElementById('toast').addEventListener('click', function(){
+    if(!lastRemoved) return;
+    var par = getNote(lastRemoved.pid); if(!par) { lastRemoved = null; return; }
+    par.items.splice(Math.min(lastRemoved.index, par.items.length), 0, lastRemoved.item);
+    lastRemoved = null; touch(par); persistNotes();
+    if(fwOpen && openNoteId === par.id) renderFolderGrid(par); else refreshCard(par);
+    this.hidden = true;
+  });
+
+  // open an item of the open folder: the same window grows out of the item's card
+  function openChild(cid){
+    var child = getNote(cid), par = child && parentOf(cid);
+    if(!child || !par || !fwOpen || openNoteId !== par.id) return;
+    var card = findCard(cid), a = card ? card.getBoundingClientRect() : null;
+    flushSave();
+    fwIn.style.transition = 'opacity 0.12s ease'; fwIn.style.opacity = '0';
+    setTimeout(function(){
+      if(!fwOpen) return;
+      fwOpenedAt = Date.now();
+      loadNoteIntoEditor(cid);
+      fwBox = fwTargetBox(child.kind);
+      if(a){ editorPage.style.transition = 'none'; fwPlace({l:a.left, t:a.top, w:a.width, h:a.height}); void editorPage.offsetWidth; editorPage.style.transition = ''; }
+      fwPlace(fwBox);
+      fwIn.style.transition = 'none'; fwIn.style.transform = 'translateY(14px)'; void fwIn.offsetWidth;
+      fwIn.style.transition = ''; fwIn.style.opacity = ''; fwIn.style.transform = '';
+    }, 120);
+  }
+  // from an item back to its folder
+  function backToFolder(){
+    var par = parentOf(openNoteId); if(!par){ closeEditor(); return; }
+    stopRecordingIfActive(); audioPauseIf(openNoteId);
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    setTextTools(false); setFolderPickOpen(false); pwReset();
+    flushSave();
+    fwIn.style.transition = 'opacity 0.12s ease'; fwIn.style.opacity = '0';
+    setTimeout(function(){
+      if(!fwOpen) return;
+      fwOpenedAt = Date.now();
+      loadNoteIntoEditor(par.id);
+      fwBox = fwTargetBox('folder'); fwPlace(fwBox);
+      fwIn.style.transition = 'none'; fwIn.style.transform = 'translateY(14px)'; void fwIn.offsetWidth;
+      fwIn.style.transition = ''; fwIn.style.opacity = ''; fwIn.style.transform = '';
+    }, 120);
+  }
+  document.getElementById('fwBack').addEventListener('click', backToFolder);
+
+  // delete a folder from its card: asks first, says how many items go with it, "Cancel" is focused
+  function askDeleteFolderItem(id){
+    var f = getNote(id); if(!f) return;
+    var c = (f.items || []).length, name = (f.title||'').trim() || 'Folder';
+    pendingDeleteNoteId = id; pendingDeleteFolderId = null; pendingDeleteNoteIds = null;
+    document.getElementById('modalTitle').textContent = 'Delete \u201c' + name + '\u201d?';
+    document.getElementById('modalMessage').textContent = (c ? 'The folder and ' + (c === 1 ? 'its 1 item' : 'its ' + c + ' items') + ' will be permanently deleted.' : 'The folder will be permanently deleted.') + " This can't be undone.";
+    document.getElementById('modalConfirm').textContent = 'Delete';
+    document.getElementById('modalOverlay').classList.add('blur');
+    showModal();
+    document.getElementById('modalCancel').focus();
+  }
 
   function navigateAnimated(direction){
     if(!fwOpen) return;
@@ -2942,18 +3333,32 @@
     var note = getNote(openNoteId); if(!note) return;
     note.title = linkTitleInput.value; touch(note); scheduleSave();
   });
+  var linkHint = document.getElementById('linkHint');
+  function syncLinkUrlState(){ linkUrlInput.classList.toggle('bad', !!linkUrlInput.value.trim() && !normUrl(linkUrlInput.value)); }
   linkUrlInput.addEventListener('input', function(){
     var note = getNote(openNoteId); if(!note) return;
-    var v = linkUrlInput.value.trim();
-    note.url = v; touch(note); scheduleSave();
+    note.url = linkUrlInput.value.trim(); touch(note); scheduleSave();
+    linkHint.textContent = ''; syncLinkUrlState();
   });
-  document.getElementById('linkIconBig').addEventListener('click', function(){
-    var note = getNote(openNoteId); if(!note || !note.url) return;
-    window.open(note.url, '_blank');
-  });
-  document.getElementById('linkVisitBtn').addEventListener('click', function(){
-    var note = getNote(openNoteId); if(!note || !note.url) return;
-    window.open(note.url, '_blank');
+  function visitLink(){
+    var note = getNote(openNoteId); if(!note) return false;
+    if(!openLinkUrl(note.url)){ linkHint.textContent = 'Enter a valid link'; linkUrlInput.classList.add('bad'); return false; }
+    return true;
+  }
+  document.getElementById('linkIconBig').addEventListener('click', visitLink);
+  document.getElementById('linkVisitBtn').addEventListener('click', visitLink);
+  linkUrlInput.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); visitLink(); } });
+  document.getElementById('linkCopyBtn').addEventListener('click', function(){
+    var btn = this, note = getNote(openNoteId), u = note && normUrl(note.url);
+    if(!u){ linkHint.textContent = 'Enter a valid link'; linkUrlInput.classList.add('bad'); return; }
+    function done(ok){ btn.textContent = ok ? 'Copied!' : "Couldn't copy"; setTimeout(function(){ btn.textContent = 'Copy'; }, 1400); }
+    function legacy(){
+      var ta = document.createElement('textarea'); ta.value = u.href; ta.style.cssText = 'position:fixed;opacity:0;left:-999px';
+      document.body.appendChild(ta); ta.select(); var ok = false;
+      try{ ok = document.execCommand('copy'); }catch(e){}
+      document.body.removeChild(ta); done(ok);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(u.href).then(function(){ done(true); }, legacy); else legacy();
   });
 
   var AUDIO_MIME = { mp3:'audio/mpeg', m4a:'audio/mp4', mp4:'audio/mp4', aac:'audio/aac', wav:'audio/wav', ogg:'audio/ogg', oga:'audio/ogg', opus:'audio/ogg', webm:'audio/webm', flac:'audio/flac' };
@@ -3131,51 +3536,75 @@
     }, immediate ? 0 : 250);
   }
 
-  // ---------- FULL-QUALITY PHOTO VIEWER (pinch / wheel zoom + pan) ----------
-  (function(){
-    var viewer = document.getElementById('photoViewer');
-    var stage = document.getElementById('photoViewerStage');
-    var img = document.getElementById('photoViewerImg');
-    var scale = 1, tx = 0, ty = 0, pts = {}, pinchD = null, pinchS = 1, lastX = 0, lastY = 0, panning = false;
-    function apply(){ img.style.transform = 'translate('+tx+'px,'+ty+'px) scale('+scale+')'; }
-    function reset(){ scale = 1; tx = 0; ty = 0; apply(); }
-    function open(src){ img.src = src; reset(); viewer.hidden = false; }
-    function close(){ viewer.hidden = true; img.src = ''; }
-    document.getElementById('photoDisplay').addEventListener('click', function(){
-      var note = getNote(openNoteId);
-      if(note && note.image) open(note.image);
-    });
-    document.getElementById('photoViewerClose').addEventListener('click', close);
-    stage.addEventListener('wheel', function(e){
-      e.preventDefault();
-      scale = clamp(scale * (e.deltaY < 0 ? 1.12 : 1/1.12), 1, 8);
-      if(scale === 1){ tx = 0; ty = 0; }
-      apply();
-    }, {passive:false});
-    stage.addEventListener('dblclick', function(){ if(scale > 1) reset(); else { scale = 2.5; apply(); } });
-    stage.addEventListener('pointerdown', function(e){
-      stage.setPointerCapture(e.pointerId);
-      pts[e.pointerId] = {x:e.clientX, y:e.clientY};
-      lastX = e.clientX; lastY = e.clientY; panning = true; pinchD = null;
-    });
-    stage.addEventListener('pointermove', function(e){
-      if(!pts[e.pointerId]) return;
-      pts[e.pointerId] = {x:e.clientX, y:e.clientY};
-      var ids = Object.keys(pts);
-      if(ids.length === 2){
-        var a = pts[ids[0]], b = pts[ids[1]];
-        var d = Math.hypot(a.x-b.x, a.y-b.y);
-        if(pinchD === null){ pinchD = d; pinchS = scale; }
-        else { scale = clamp(pinchS * d / pinchD, 1, 8); if(scale === 1){ tx = 0; ty = 0; } apply(); }
-      } else if(panning && scale > 1){
-        tx += e.clientX - lastX; ty += e.clientY - lastY; lastX = e.clientX; lastY = e.clientY; apply();
-      }
-    });
-    function up(e){ delete pts[e.pointerId]; pinchD = null; if(Object.keys(pts).length === 0) panning = false; }
-    stage.addEventListener('pointerup', up);
-    stage.addEventListener('pointercancel', up);
-    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !viewer.hidden){ close(); e.stopImmediatePropagation(); } }, true);
-  })();
+  // ---------- PHOTO WINDOW: 2x zoom on click (mouse moves the view, touch drags), change image, download ----------
+  var photoStage = document.getElementById('photoStage');
+  var photoReplaceInput = document.getElementById('photoReplaceInput');
+  var pwZoom = false, pwTx = 0, pwTy = 0, pwDrag = null, pwMoved = false;
+  function pwApply(){
+    photoDisplay.style.transform = pwZoom ? 'translate(' + pwTx + 'px,' + pwTy + 'px) scale(2)' : 'none';
+    photoStage.classList.toggle('z', pwZoom);
+  }
+  function pwReset(){ pwZoom = false; pwTx = 0; pwTy = 0; pwDrag = null; photoDisplay.style.transformOrigin = ''; photoStage.classList.remove('panning'); pwApply(); }
+  photoStage.addEventListener('click', function(e){
+    if(pwMoved){ pwMoved = false; return; }
+    if(!photoDisplay.getAttribute('src')) return;
+    pwZoom = !pwZoom; pwTx = 0; pwTy = 0;
+    if(pwZoom && (!e.pointerType || e.pointerType === 'mouse')){
+      var r = photoDisplay.getBoundingClientRect();
+      photoDisplay.style.transformOrigin = ((e.clientX - r.left)/r.width*100) + '% ' + ((e.clientY - r.top)/r.height*100) + '%';
+    } else photoDisplay.style.transformOrigin = '';
+    pwApply();
+  });
+  photoStage.addEventListener('pointermove', function(e){
+    if(e.pointerType === 'mouse'){                                   // mouse: the view follows the pointer
+      if(!pwZoom) return;
+      var sr = photoStage.getBoundingClientRect(), ir = { w: photoDisplay.offsetWidth, h: photoDisplay.offsetHeight };
+      var ox = ((e.clientX - sr.left) - (sr.width - ir.w)/2) / ir.w * 100, oy = ((e.clientY - sr.top) - (sr.height - ir.h)/2) / ir.h * 100;
+      photoDisplay.style.transformOrigin = Math.max(0, Math.min(100, ox)) + '% ' + Math.max(0, Math.min(100, oy)) + '%';
+      return;
+    }
+    if(!pwDrag || !pwZoom) return;                                    // touch / pen: drag to pan
+    var dx = e.clientX - pwDrag.x, dy = e.clientY - pwDrag.y;
+    if(!pwMoved && Math.abs(dx) + Math.abs(dy) < 5) return;
+    pwMoved = true; photoStage.classList.add('panning');
+    pwTx = Math.max(-photoDisplay.offsetWidth/2, Math.min(photoDisplay.offsetWidth/2, pwDrag.tx + dx));
+    pwTy = Math.max(-photoDisplay.offsetHeight/2, Math.min(photoDisplay.offsetHeight/2, pwDrag.ty + dy));
+    pwApply();
+  });
+  photoStage.addEventListener('pointerdown', function(e){
+    if(e.pointerType === 'mouse') return;
+    pwMoved = false; pwDrag = { x:e.clientX, y:e.clientY, tx:pwTx, ty:pwTy };
+    try{ photoStage.setPointerCapture(e.pointerId); }catch(x){}
+  });
+  function pwUp(){ pwDrag = null; photoStage.classList.remove('panning'); }
+  photoStage.addEventListener('pointerup', pwUp);
+  photoStage.addEventListener('pointercancel', pwUp);
+
+  function setPhotoImage(note, dataUrl){
+    note.image = dataUrl; touch(note);
+    photoDisplay.src = dataUrl; pwReset();
+    scheduleSave(true); refreshCard(note);
+  }
+  function replacePhotoFromFile(file){
+    if(!file || !/^image\//.test(file.type || '')) return;
+    var id = openNoteId;
+    readImageSmart(file, function(dataUrl){ var note = getNote(id); if(note && note.kind === 'photo') setPhotoImage(note, dataUrl); });
+  }
+  document.getElementById('photoChangeBtn').addEventListener('click', function(){ photoReplaceInput.click(); });
+  photoReplaceInput.addEventListener('change', function(){ replacePhotoFromFile(photoReplaceInput.files && photoReplaceInput.files[0]); photoReplaceInput.value = ''; });
+  // drop an image on the window to replace the photo
+  var photoDropZone = document.getElementById('photoEditorInner');
+  ['dragenter','dragover'].forEach(function(t){ photoDropZone.addEventListener(t, function(e){ e.preventDefault(); photoStage.classList.add('drag'); }); });
+  ['dragleave','drop'].forEach(function(t){ photoDropZone.addEventListener(t, function(e){ e.preventDefault(); if(t === 'drop' || e.target === photoDropZone) photoStage.classList.remove('drag'); }); });
+  photoDropZone.addEventListener('drop', function(e){ e.stopPropagation(); replacePhotoFromFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
+  document.getElementById('photoDownloadBtn').addEventListener('click', function(){
+    var note = getNote(openNoteId); if(!note || !note.image) return;
+    var m = /^data:image\/([a-z0-9+.-]+)/i.exec(note.image), ext = m ? m[1].toLowerCase().replace('jpeg','jpg').replace('svg+xml','svg') : 'png';
+    var name = ((note.title || '').trim() || 'image').replace(/[\\\/:*?"<>|]+/g, '-');
+    var bytes = dataUrlToBytes(note.image), url = URL.createObjectURL(new Blob([bytes], {type: m ? 'image/' + m[1] : 'image/png'}));
+    var a = document.createElement('a'); a.href = url; a.download = name + '.' + ext; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  });
 
   // ---------- DRAWING ----------
   var drawOverlay = document.getElementById('drawOverlay');
@@ -3269,7 +3698,7 @@
     showModal();
   }
   function showModal(){ document.getElementById('modalOverlay').classList.add('show'); }
-  function hideModal(){ document.getElementById('modalOverlay').classList.remove('show'); pendingDeleteNoteId=null; pendingDeleteFolderId=null; pendingDeleteNoteIds=null; renderBoard(); }
+  function hideModal(){ document.getElementById('modalOverlay').classList.remove('show','blur'); pendingDeleteNoteId=null; pendingDeleteFolderId=null; pendingDeleteNoteIds=null; renderBoard(); }
   function performDelete(){
     if(pendingDeleteNoteIds){
       var gone = {}; pendingDeleteNoteIds.forEach(function(id){ gone[id] = true; });
@@ -3303,6 +3732,7 @@
     else if(e.key === 'Escape'){
       if(!drawOverlay.hidden) drawOverlay.hidden = true;
       else if(folderPickOpen) setFolderPickOpen(false);
+      else if(fwOpen && folderMenuOpen()) setFolderMenu(false);
       else if(fwOpen) closeEditor();
       else if(document.getElementById('modalOverlay').classList.contains('show')) hideModal();
       else if(fabMenuOpen) setFabMenu(false);
