@@ -102,16 +102,14 @@
   .card-clip{
     overflow:hidden; border-radius:inherit; display:flex; flex-direction:column; flex:1; min-height:0; width:100%; height:100%;
     background:var(--cbg); border:1px solid var(--cborder); box-shadow:var(--float-sh);
-    animation:card-float 6s ease-in-out infinite;
     transition:translate 0.35s var(--ease), rotate 0.35s var(--ease), scale 0.35s var(--ease), box-shadow 0.35s ease;
   }
-  @keyframes card-float{ 50%{ transform:translateY(-8px) rotate(0.4deg); } }
   /* unselected cards let a finger swipe scroll the board; only the selected (movable) card captures the touch to be dragged */
   .mode-free .card{ position:absolute; touch-action:pan-x pan-y; cursor:grab; }
   .mode-free .card.movable{ touch-action:none; }
   .mode-masonry .card{ touch-action:pan-y; width:100%; align-self:start; animation:card-in 0.2s ease both; }
   @keyframes card-in{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
-  .card:hover .card-clip{ translate:0 -6px; rotate:-0.6deg; scale:1.03; animation-play-state:paused; }
+  .card:hover .card-clip{ translate:0 -6px; rotate:-0.6deg; scale:1.03; }
   .card.dragging, .card.resizing, .card.rotating{ cursor:grabbing; transition:none; z-index:9999 !important; }
   .card.dragging .card-clip, .card.resizing .card-clip, .card.rotating .card-clip{ box-shadow:0 22px 44px -16px rgba(20,18,14,0.42); }
   /* no floating while dragging / resizing / rotating, while selected for moving, or in selection mode */
@@ -125,7 +123,6 @@
   .card.faded{ opacity:0.22; pointer-events:none; }
   .card.select-dim{ opacity:0.5; }
   .card.selected{ outline:2.5px solid var(--accent); outline-offset:2px; }
-  @media (prefers-reduced-motion:reduce){ .card-clip{ animation:none; } }
 
   .card-swipe-wrap{ position:relative; width:100%; height:100%; display:flex; flex-direction:column; flex:1; min-height:0; background:inherit; }
   .card-delete-reveal{ opacity:0; position:absolute; inset:0; background:var(--danger); color:#fff; display:flex; align-items:center; justify-content:flex-end; padding-right:18px; font-size:13px; font-weight:600; border-radius:24px; z-index:0; }
@@ -583,9 +580,12 @@
   .fold-name{ flex:1; min-width:0; border:0; background:none; outline:none; font-size:clamp(26px,5vw,38px); font-weight:700; letter-spacing:-0.03em; color:inherit; font-family:inherit; padding:0; }
   .fold-name::placeholder{ color:currentColor; opacity:0.28; }
   .fold-cnt{ font-size:13px; color:var(--fw-mute); white-space:nowrap; margin-right:44px; }
-  .fgrid{ flex:1; min-height:0; overflow:auto; padding:6px 30px 120px; columns:220px; column-gap:14px; scrollbar-width:none; -ms-overflow-style:none; overscroll-behavior:contain; }
+  .fgrid{ flex:1; min-height:0; overflow-x:hidden; overflow-y:auto; padding:6px 30px 120px; scrollbar-width:none; -ms-overflow-style:none; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+  .fcols{ display:flex; gap:14px; align-items:flex-start; }
+  .fcol{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:14px; }
+  .fgrid.relayout .card{ animation:none; }
   .fgrid::-webkit-scrollbar{ display:none; }
-  .fgrid .card{ position:relative; width:100%; display:flex; break-inside:avoid; margin-bottom:14px; cursor:pointer; animation:fpop 0.4s var(--ease) both; }
+  .fgrid .card{ position:relative; width:100%; flex:none; display:flex; cursor:pointer; animation:fpop 0.4s var(--ease) both; }
   @keyframes fpop{ from{ opacity:0; transform:scale(0.9) translateY(10px); } }
   .fgrid .card-clip{ animation:none; box-shadow:0 8px 22px -10px rgba(40,50,90,0.35); }
   .fgrid .card.kind-photo.auto-size .card-photo-fill img{ max-height:300px; min-height:120px; }
@@ -593,7 +593,7 @@
   .fgrid .card:hover .fx, .fgrid .card .fx:focus-visible{ opacity:1; }
   @media (hover:none){ .fgrid .card .fx{ opacity:1; } }
   .fgrid .card .fx:hover{ background:var(--danger); }
-  .femp{ column-span:all; text-align:center; color:var(--fw-mute); font-size:14px; padding:60px 0; line-height:1.6; }
+  .femp{ text-align:center; color:var(--fw-mute); font-size:14px; padding:60px 0; line-height:1.6; }
   .fadd{ position:absolute; right:24px; bottom:72px; display:flex; flex-direction:column; align-items:flex-end; gap:10px; z-index:4; }
   .fmenu{ display:flex; flex-direction:column; gap:2px; padding:6px; background:var(--fw-bg); border-radius:22px; box-shadow:var(--float-sh), 0 0 0 1px var(--fw-line); transform-origin:100% 100%; opacity:0; transform:translateY(14px) scale(0.9); pointer-events:none; transition:opacity 0.2s ease, transform 0.3s var(--ease); }
   .fadd.open .fmenu{ opacity:1; transform:none; pointer-events:auto; }
@@ -1483,7 +1483,6 @@
       var innerHTML = n.kind === 'photo' ? photoInnerHTML(n) : cardBodyHTML(n);
       var clip = document.createElement('div');
       clip.className = 'card-clip';
-      clip.style.animationDelay = '-' + (((parseInt(String(n.id).slice(-3), 36) || 0) % 60) / 10) + 's';
       clip.innerHTML = boardMode === 'masonry'
         ? '<div class="card-swipe-wrap"><div class="card-delete-reveal">Delete</div><div class="card-inner">'+innerHTML+'</div></div>'
         : innerHTML;
@@ -2850,6 +2849,7 @@
     var n = getNote(openNoteId); if(!n) return;
     fwBox = fwTargetBox(n.kind);
     editorPage.style.transition = 'none'; fwPlace(fwBox); void editorPage.offsetWidth; editorPage.style.transition = '';
+    if(n.kind === 'folder' && folderGrid.firstChild && folderGrid.querySelector('.fcols') && folderGrid.querySelectorAll('.fcol').length !== folderColCount()) layoutFolderCols(true);
   }
   function fwFinishClose(){
     fwCloseTimer = null;
@@ -2959,13 +2959,49 @@
     wireAudioPlayButton(card, it); wireLinkOpen(card, it);
     return card;
   }
-  function renderFolderGrid(par){
+  var folderCards = [], folderRelayoutTimer = 0;
+  // how many columns fit in the window's FINAL width (not the width mid-animation)
+  function folderColCount(){
+    var w = fwTargetBox('folder').w;
+    return Math.max(1, Math.floor((w - 60 + 14) / (220 + 14)));
+  }
+  // masonry made of real flex columns: each card goes to the currently shortest column, and the grid only ever scrolls vertically
+  function layoutFolderCols(keepScroll){
+    var top = folderGrid.scrollTop;
     folderGrid.innerHTML = '';
+    if(!folderCards.length){ folderGrid.innerHTML = '<div class="femp">This folder is empty.<br>Add something with the + button.</div>'; return; }
+    var wrap = document.createElement('div'); wrap.className = 'fcols';
+    var cols = [], n = folderColCount();
+    for(var i=0;i<n;i++){ var c = document.createElement('div'); c.className = 'fcol'; wrap.appendChild(c); cols.push(c); }
+    folderGrid.appendChild(wrap);
+    folderCards.forEach(function(card){
+      var k = 0, min = Infinity;
+      cols.forEach(function(col, idx){ var h = col.offsetHeight; if(h < min - 0.5){ min = h; k = idx; } });
+      cols[k].appendChild(card);
+    });
+    if(keepScroll) folderGrid.scrollTop = top;
+    markPreviews(folderGrid);
+  }
+  // photos get their real height once decoded: re-balance the columns (without replaying the pop-in)
+  function scheduleFolderRelayout(){
+    clearTimeout(folderRelayoutTimer);
+    folderRelayoutTimer = setTimeout(function(){
+      if(!fwOpen || document.getElementById('folderEditorInner').hidden) return;
+      folderGrid.classList.add('relayout'); layoutFolderCols(true);
+      setTimeout(function(){ folderGrid.classList.remove('relayout'); }, 50);
+    }, 90);
+  }
+  function renderFolderGrid(par){
     var items = par.items || [];
-    if(!items.length){ folderGrid.innerHTML = '<div class="femp">This folder is empty.<br>Add something with the + button.</div>'; }
-    items.forEach(function(it, i){ var c = buildChildCard(it); c.style.animationDelay = Math.min(i*30, 240) + 'ms'; folderGrid.appendChild(c); });
+    folderCards = items.map(function(it, i){
+      var c = buildChildCard(it); c.style.animationDelay = Math.min(i*30, 240) + 'ms';
+      Array.prototype.forEach.call(c.querySelectorAll('img'), function(im){ if(!im.complete) im.addEventListener('load', scheduleFolderRelayout); });
+      return c;
+    });
+    folderGrid.classList.remove('relayout');
+    layoutFolderCols(true);
     document.getElementById('folderCount').textContent = itemsLabel(items.length);
-    markPreviews(folderGrid); paintAudio();
+    paintAudio();
   }
   function renderFolderPanel(par){
     folderNameInput.value = par.title || '';
