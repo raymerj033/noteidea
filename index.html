@@ -625,6 +625,44 @@
   .modal-btn.cancel:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
   .toast:not([hidden]){ cursor:pointer; }
   #folderCircleBtn[hidden]{ display:none !important; }
+
+  /* ---- PHOTO: the frame follows the photo's own shape (no forced height, no empty band) ---- */
+  .card.kind-photo.auto-size .card-photo-fill img{ height:auto; min-height:0; max-height:520px; object-fit:cover; }
+  .fgrid .card.kind-photo.auto-size .card-photo-fill img{ min-height:0; max-height:360px; }
+  /* resized cards: the photo is pinned to the frame (not "height:100% of a flex item", which Safari resolves differently) */
+  .card.kind-photo.sized .card-photo-fill{ flex:1 1 auto; height:auto; min-height:0; }
+  .card.kind-photo.sized .card-photo-fill img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .card-photo-fill{ background:transparent; }
+
+  /* ---- PHOTO window hugs the photo: the viewer is exactly the photo's shape, so there is no empty band around it ---- */
+  .pw-area{ flex:1; min-height:0; display:grid; place-items:center; }
+  .pw-stage{ flex:none; position:relative; width:100%; height:100%; min-height:0; display:block; border-radius:18px; overflow:hidden; background:var(--fw-soft); }
+  .pw-stage img{ object-fit:cover; }
+  .pw-bar{ min-height:46px; }
+
+  /* ---- FOLDER on phones: 2 masonry columns with compact cards ---- */
+  .fgrid.narrow{ padding:6px 16px 120px; }
+  .fgrid.narrow .fcols, .fgrid.narrow .fcol{ gap:10px; }
+  .fgrid.narrow .fold-head, .fold-head.narrow{ padding-left:20px; }
+  .fgrid.narrow .card-clip{ border-radius:20px; }
+  .fgrid.narrow .pv-title{ font-size:17px; }
+  .fgrid.narrow .kind-note .card-body{ padding:14px 14px 12px; }
+  .fgrid.narrow .kind-quick .card-body{ padding:13px 13px 11px; }
+  .fgrid.narrow .qpv .quick-text{ font-size:13px; }
+  .fgrid.narrow .card.kind-audio .card-body, .fgrid.narrow .card.kind-link .card-body{ padding:12px; }
+  .fgrid.narrow .card.kind-audio .audio-row, .fgrid.narrow .card.kind-link .link-row{ gap:9px; }
+  .fgrid.narrow .card.kind-audio .audio-icon, .fgrid.narrow .card.kind-audio .audio-play-btn, .fgrid.narrow .card.kind-link .link-icon{ width:36px; height:36px; flex:none; }
+  .fgrid.narrow .card.kind-audio .audio-icon svg, .fgrid.narrow .card.kind-audio .audio-play-btn svg, .fgrid.narrow .card.kind-link .link-icon svg{ width:17px; height:17px; }
+  .fgrid.narrow .adur{ display:none; }
+  .fgrid.narrow .aw i:nth-child(n+13){ display:none; }
+  .fgrid.narrow .card.kind-audio .card-footer, .fgrid.narrow .card.kind-link .card-footer{ top:5px; right:8px; }
+  .fgrid.narrow .card-photo-footer{ padding:28px 10px 9px; }
+  .fgrid.narrow .card-photo-caption{ font-size:12px; }
+  .fgrid.narrow .card .fx{ top:5px; right:5px; width:22px; height:22px; }
+  @media (hover:none){
+    .fgrid.narrow .audio-meta, .fgrid.narrow .link-meta{ padding-right:16px; }
+    .fgrid.narrow .pv-title, .fgrid.narrow .qpv .quick-text{ padding-right:16px; }
+  }
 </style>
 </head>
 <body>
@@ -770,7 +808,7 @@
 
       <!-- PHOTO editor -->
       <div class="editor-inner photo-mode" id="photoEditorInner" hidden>
-        <div class="pw-stage" id="photoStage"><img id="photoDisplay" src="" alt="" draggable="false"></div>
+        <div class="pw-area" id="photoArea"><div class="pw-stage" id="photoStage"><img id="photoDisplay" src="" alt="" draggable="false"></div></div>
         <div class="pw-bar">
           <input type="text" class="photo-caption-input" id="photoCaptionInput" placeholder="Add a caption…" maxlength="140" spellcheck="false">
           <button class="pill-btn" id="photoChangeBtn">Change image</button>
@@ -1479,7 +1517,7 @@
 
     list.forEach(function(n, idx){
       if(boardMode === 'masonry' && !matchesFilter(n)) return;
-      var natural = boardMode === 'masonry' || !n.sized;
+      var natural = boardMode === 'masonry' || !n.sized || n.kind === 'photo';   // a photo's frame always follows the photo's own shape
       var card = document.createElement('div');
       card.setAttribute('data-note-id', n.id);
       var cls = 'card kind-' + n.kind + ' color-' + cardColor(n) + (natural ? ' auto-size' : ' sized') + (matchesFilter(n) ? '' : ' faded');
@@ -1507,7 +1545,7 @@
       if(boardMode === 'free'){
         card.style.transform = 'translate('+(n.x+offX)+'px,'+(n.y+offY)+'px) rotate('+n.rot+'deg)';
         card.style.width = n.w + 'px';
-        card.style.height = n.sized ? (n.h + 'px') : 'auto';
+        card.style.height = (n.sized && n.kind !== 'photo') ? (n.h + 'px') : 'auto';
         card.style.zIndex = n.z;
         if(activeCardId === n.id && !selectionMode){
           card.classList.add('card-active');
@@ -1969,12 +2007,13 @@
   }
 
   function attachResize(handleEl, cardEl, note){
-    var startX, startY, startW, startH, resizing=false;
+    var startX, startY, startW, startH, resizing=false, ratio=0;
     handleEl.addEventListener('pointerdown', function(e){
       e.stopPropagation();
       handleEl.setPointerCapture(e.pointerId);
       var rect = cardEl.getBoundingClientRect();
       startX = e.clientX; startY = e.clientY; startW = rect.width; startH = rect.height; resizing = true;
+      ratio = (note.kind === 'photo' && cardEl.offsetHeight) ? cardEl.offsetWidth / cardEl.offsetHeight : 0;   // photos resize proportionally
       note.sized = true;
       note.w = startW; note.h = startH;
       cardEl.classList.remove('auto-size'); cardEl.classList.add('sized');
@@ -1988,8 +2027,14 @@
       if(!resizing) return;
       e.stopPropagation();
       var dx = e.clientX - startX, dy = e.clientY - startY;
-      note.w = clamp(startW + dx, CARD_W_MIN, CARD_W_MAX);
-      note.h = clamp(startH + dy, CARD_H_MIN, CARD_H_MAX);
+      if(ratio){                                   // photo: width drives, height follows the photo's shape
+        var w = clamp(startW + dx, CARD_W_MIN, CARD_W_MAX), h = w / ratio;
+        if(h > CARD_H_MAX){ h = CARD_H_MAX; w = h * ratio; } else if(h < CARD_H_MIN){ h = CARD_H_MIN; w = h * ratio; }
+        note.w = w; note.h = h;
+      } else {
+        note.w = clamp(startW + dx, CARD_W_MIN, CARD_W_MAX);
+        note.h = clamp(startH + dy, CARD_H_MIN, CARD_H_MAX);
+      }
       cardEl.style.width = note.w + 'px';
       cardEl.style.height = note.h + 'px';
     });
@@ -2853,18 +2898,60 @@
     a.addEventListener('finish', function(){ var i = fwRunning.indexOf(a); if(i > -1 && opts.fill !== 'forwards') fwRunning.splice(i, 1); });
     return a;
   }
+  // ---- photo window: size follows the photo ----
+  var photoDims = {};   // id -> { src, w, h } natural size, learnt from the card's image or by decoding once
+  function photoDimsOf(note){
+    if(!note || note.kind !== 'photo' || !note.image) return null;
+    var c = photoDims[note.id];
+    if(c && c.src === note.image) return c;
+    var card = findCard(note.id), im = card && card.querySelector('img');
+    if(im && im.complete && im.naturalWidth){ return photoDims[note.id] = { src:note.image, w:im.naturalWidth, h:im.naturalHeight }; }
+    var pre = new Image();                                 // not known yet: decode once, then re-fit the window when it arrives
+    pre.onload = function(){
+      photoDims[note.id] = { src:note.image, w:pre.naturalWidth, h:pre.naturalHeight };
+      if(fwOpen && openNoteId === note.id) fwRefit();
+    };
+    pre.src = note.image;
+    if(pre.complete && pre.naturalWidth) return photoDims[note.id] = { src:note.image, w:pre.naturalWidth, h:pre.naturalHeight };
+    return null;
+  }
+  // exact room the photo may use inside the window, from the window's own geometry
+  function photoChrome(boxW, isChild){
+    var bottom = (typeof editorBottombarEl !== 'undefined' && editorBottombarEl && editorBottombarEl.offsetHeight) || 54;
+    var wide = boxW >= 520, bar = wide ? 46 : 92;          // caption + buttons: one row on wide windows, two rows on phones
+    return { x:36, y:(isChild ? 62 : 18) + 14 + bar + 2 + bottom + 17 };
+  }
+  function fitPhoto(){
+    var area = document.getElementById('photoArea'), im = photoDisplay;
+    if(!area || document.getElementById('photoEditorInner').hidden) return;
+    var nw = im.naturalWidth, nh = im.naturalHeight, aw = area.clientWidth, ah = area.clientHeight;
+    if(!nw || !nh || !aw || !ah) return;
+    var sc = Math.min(aw/nw, ah/nh), w = Math.max(1, Math.round(nw*sc)), h = Math.max(1, Math.round(nh*sc));
+    photoStage.style.width = w + 'px'; photoStage.style.height = h + 'px';
+  }
   // final size + position: capped per kind, limited by the visible screen (keyboard-aware via visualViewport) and the safe areas
-  function fwTargetBox(kind){
+  function fwTargetBox(kind, note){
     var m = FW_MAX[kind] || FW_MAX.note, cs = getComputedStyle(safeProbe);
     var st = parseFloat(cs.paddingTop)||0, sr = parseFloat(cs.paddingRight)||0, sb = parseFloat(cs.paddingBottom)||0, sl = parseFloat(cs.paddingLeft)||0;
     var vw = vv ? vv.width : window.innerWidth, vh = vv ? vv.height : window.innerHeight;
     var ox = vv ? vv.offsetLeft : 0, oy = vv ? vv.offsetTop : 0;
     var mg = window.innerWidth < 600 ? 12 : 32;
     var w = Math.max(240, Math.min(m.w, vw - sl - sr - mg*2)), h = Math.max(200, Math.min(m.h, vh - st - sb - mg*2));
+    var d = (kind === 'photo' && note) ? photoDimsOf(note) : null;
+    if(d){                                           // the window is as big as the photo needs, never bigger: no empty bands
+      var ch = photoChrome(w, !!parentOf(note.id)), availW = w - ch.x, availH = h - ch.y;
+      var sc = Math.min(availW/d.w, availH/d.h, 3);            // fit inside the screen; small photos may grow up to 3x
+      var pw = Math.round(d.w*sc), ph = Math.round(d.h*sc);
+      var minW = 340;                                           // wide enough for the caption row and buttons
+      w = Math.min(w, Math.max(minW, pw + ch.x));
+      ch = photoChrome(w, !!parentOf(note.id));
+      h = Math.min(h, ph + ch.y);
+    }
     return { w:w, h:h, l: ox + sl + (vw - sl - sr - w)/2, t: oy + st + (vh - st - sb - h)/2 };
   }
   function fwPlace(b){
     [fwBoxEl, fwSh].forEach(function(e){ e.style.left = b.l + 'px'; e.style.top = b.t + 'px'; e.style.width = b.w + 'px'; e.style.height = b.h + 'px'; });
+    fitPhoto();
   }
   function rectOf(el){ var r = el.getBoundingClientRect(); return { l:r.left, t:r.top, w:r.width, h:r.height }; }
   function shrunk(b, k){ return { l:b.l + b.w*(1-k)/2, t:b.t + b.h*(1-k)/2, w:b.w*k, h:b.h*k }; }
@@ -2958,7 +3045,7 @@
     var n = getNote(openNoteId); if(!n) return;
     if(fwRunning.length){ fwNeedRefit = true; return; }
     var old = fwClipFor(fwBox, FW_R);
-    fwBox = fwTargetBox(n.kind);
+    fwBox = fwTargetBox(n.kind, n);
     fwPlace(fwBox);
     var end = fwClipFor(fwBox, FW_R);
     fwSetClip(end);
@@ -2982,7 +3069,7 @@
     if(fwOpen) return;
     fwDirty = false; fwStructural = false; fwOpenedAt = Date.now();
     loadNoteIntoEditor(id);                      // fills the panels, applies colour
-    var card = findCard(id), b = fwTargetBox(note.kind);
+    var card = findCard(id), b = fwTargetBox(note.kind, note);
     var from = card ? rectOf(card) : null;       // the card's real rectangle (already includes zoom, position and rotation)
     fwCardH0 = card ? card.offsetHeight : 0;
     if(card){ card.style.opacity = ''; setTimeout(function(){ if(fwOpen && openNoteId === id) hideSourceCard(id); }, 130); }   // the card hands over to the window with a short cross-fade
@@ -3066,8 +3153,10 @@
   }
   var folderCards = [], folderRelayoutTimer = 0;
   // how many columns fit in the window's FINAL width (not the width mid-animation)
+  function folderNarrow(){ return fwTargetBox('folder').w < 520; }
   function folderColCount(){
     var w = fwTargetBox('folder').w;
+    if(w < 520) return Math.max(2, Math.floor((w - 32 + 10) / (140 + 10)));          // phones: 2 compact columns
     return Math.max(1, Math.floor((w - 60 + 14) / (220 + 14)));
   }
   // masonry made of real flex columns: each card goes to the currently shortest column, and the grid only ever scrolls vertically
@@ -3077,6 +3166,7 @@
     if(!folderCards.length){ folderGrid.innerHTML = '<div class="femp">This folder is empty.<br>Add something with the + button.</div>'; return; }
     var wrap = document.createElement('div'); wrap.className = 'fcols';
     var cols = [], n = folderColCount();
+    folderGrid.classList.toggle('narrow', folderNarrow());
     for(var i=0;i<n;i++){ var c = document.createElement('div'); c.className = 'fcol'; wrap.appendChild(c); cols.push(c); }
     folderGrid.appendChild(wrap);
     folderCards.forEach(function(card){
@@ -3183,7 +3273,7 @@
     fwMorph(function(){
       fwOpenedAt = Date.now();
       loadNoteIntoEditor(cid);
-      fwBox = fwTargetBox(child.kind);
+      fwBox = fwTargetBox(child.kind, child);
     }, null, 0);
   }
   // from an item back to its folder
@@ -3224,7 +3314,7 @@
       var prev = getNote(openNoteId); if(prev && fwDirty) refreshCard(prev);
       fwOpenedAt = Date.now();
       loadNoteIntoEditor(next.id);                       // hides the new source card, shows the previous one again
-      fwBox = fwTargetBox(next.kind);                    // the window resizes for the new kind
+      fwBox = fwTargetBox(next.kind, next);              // the window resizes for the new kind
     }, null, direction);
   }
 
@@ -3658,6 +3748,12 @@
   // ---------- PHOTO WINDOW: 2x zoom on click (mouse moves the view, touch drags), change image, download ----------
   var photoStage = document.getElementById('photoStage');
   var photoReplaceInput = document.getElementById('photoReplaceInput');
+  photoDisplay.addEventListener('load', function(){
+    var n = getNote(openNoteId);
+    if(n && n.kind === 'photo'){ photoDims[n.id] = { src:n.image, w:photoDisplay.naturalWidth, h:photoDisplay.naturalHeight }; }
+    fitPhoto();
+    if(fwOpen && n && n.kind === 'photo'){ var nb = fwTargetBox('photo', n); if(!fwBox || Math.abs(nb.w - fwBox.w) > 2 || Math.abs(nb.h - fwBox.h) > 2) fwRefit(); }   // e.g. after "Change image" with another shape
+  });
   var pwZoom = false, pwTx = 0, pwTy = 0, pwDrag = null, pwMoved = false;
   function pwApply(){
     photoDisplay.style.transform = pwZoom ? 'translate(' + pwTx + 'px,' + pwTy + 'px) scale(2)' : 'none';
