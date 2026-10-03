@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <title>Notepad</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Notepad: notes, quick notes, photos, audio, links and folders on a free canvas.">
+<meta name="theme-color" content="#E8E7E2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Notepad">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
   :root{
     --canvas-bg:#E8E7E2;
@@ -516,7 +526,7 @@
   .link-icon-big:hover{ background:var(--hover); color:#fff; transform:scale(1.07) rotate(-8deg); }
   .link-icon-big:active{ transform:scale(0.95); }
   #linkEditorInner .link-title-input{ max-width:340px; font-size:22px; font-weight:600; letter-spacing:-0.02em; }
-  #linkEditorInner .link-url-input{ max-width:340px; border:1px solid var(--fw-line); border-radius:14px; padding:12px 16px; font-size:14px; opacity:1; transition:border-color 0.2s ease, box-shadow 0.2s ease; }
+  #linkEditorInner .link-url-input{ max-width:340px; border:1px solid var(--fw-line); border-radius:14px; padding:12px 16px; font-size:16px; opacity:1; transition:border-color 0.2s ease, box-shadow 0.2s ease; }
   #linkEditorInner .link-url-input:focus{ border-color:var(--hover); box-shadow:0 0 0 4px rgba(91,108,255,0.15); }
   #linkEditorInner .link-url-input.bad{ border-color:var(--danger); }
   .link-hint{ font-size:12px; color:var(--danger); min-height:16px; text-align:center; }
@@ -663,6 +673,16 @@
     .fgrid.narrow .audio-meta, .fgrid.narrow .link-meta{ padding-right:16px; }
     .fgrid.narrow .pv-title, .fgrid.narrow .qpv .quick-text{ padding-right:16px; }
   }
+
+  .storage-fatal{ position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:24px; background:rgba(20,22,35,0.5); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  .storage-fatal[hidden]{ display:none; }
+  .sf-card{ background:var(--surface,#FAF8F2); color:var(--ink); border-radius:22px; padding:24px; max-width:360px; box-shadow:0 30px 60px -20px rgba(0,0,0,0.5); text-align:left; }
+  .sf-card h3{ margin:0 0 8px; font-size:18px; letter-spacing:-0.01em; }
+  .sf-card p{ margin:0 0 18px; font-size:14px; line-height:1.5; color:var(--ink-soft); }
+  .sf-card button{ border:0; border-radius:999px; background:var(--accent); color:var(--on-accent); font-size:14px; font-weight:600; padding:10px 22px; cursor:pointer; }
+  /* iOS zooms the whole page when a field smaller than 16px gets focus */
+  .note-body{ font-size:16px; }
+  #linkUrlInput, .scene-add-row input, .fab-menu .new-folder-input{ font-size:16px; }
 </style>
 </head>
 <body>
@@ -922,6 +942,9 @@
     <canvas id="drawCanvas"></canvas>
   </div>
 
+  <div class="storage-fatal" id="storageFatal" hidden role="alertdialog" aria-modal="true">
+    <div class="sf-card"><h3></h3><p></p><button id="storageReload">Reload</button></div>
+  </div>
   <div class="toast" id="toast" hidden></div>
 
   <!-- CONFIRM MODAL -->
@@ -1022,16 +1045,18 @@
   }
   // ---- Notes live in IndexedDB (localStorage is ~5MB and silently fails once photos fill it) ----
   var IDB = (function(){
-    var dbp = null;
+    var dbp = null, openFailed = false;
     function open(){
       if(dbp) return dbp;
       dbp = new Promise(function(res, rej){
-        if(!window.indexedDB){ rej(new Error('no idb')); return; }
+        if(!window.indexedDB){ openFailed = true; rej(new Error('no idb')); return; }
         var r = indexedDB.open('notepad_db', 1);
         r.onupgradeneeded = function(){ r.result.createObjectStore('kv'); };
-        r.onsuccess = function(){ res(r.result); };
-        r.onerror = function(){ rej(r.error); };
+        r.onsuccess = function(){ openFailed = false; res(r.result); };
+        r.onerror = function(){ openFailed = true; rej(r.error); };
+        r.onblocked = function(){};
       });
+      dbp.catch(function(){ dbp = null; });          // a failed open must not stay cached: the next call tries again
       return dbp;
     }
     function get(k){
@@ -1049,7 +1074,21 @@
         tx.onabort = function(){ rej(tx.error); };
       }); });
     }
-    return { get:get, set:set };
+    // writes the notes only if nobody else saved since we loaded/saved (same transaction, so it is atomic across tabs)
+    function save(list, expected){
+      return open().then(function(db){ return new Promise(function(res, rej){
+        var tx = db.transaction('kv','readwrite'), st = tx.objectStore('kv'), nr = uid(), conflict = false;
+        var rq = st.get('rev');
+        rq.onsuccess = function(){
+          var cur = rq.result == null ? null : rq.result;
+          if(cur !== expected){ conflict = true; tx.abort(); return; }
+          st.put(list, 'notes'); st.put(nr, 'rev');
+        };
+        tx.oncomplete = function(){ res(nr); };
+        tx.onabort = function(){ var e = new Error(conflict ? 'conflict' : 'abort'); e.conflict = conflict; rej(e); };
+      }); });
+    }
+    return { get:get, set:set, save:save, reset:function(){ dbp = null; }, unavailable:function(){ return openFailed; } };
   })();
 
   var stateLoaded = false, writing = false, writePending = false, notesFromLegacy = false, toastTimer = null;
@@ -1065,30 +1104,76 @@
   function clearLegacyNotes(){
     try{ ['notepad_notes_v3','notepad_notes_v2','notepad_notes_v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
   }
-  function loadNotesAsync(){
-    return IDB.get('notes').catch(function(){ return undefined; }).then(function(v){
-      if(Array.isArray(v)) return v;
-      var legacy = [];
-      ['notepad_notes_v3','notepad_notes_v2','notepad_notes_v1'].forEach(function(key){
-        if(legacy.length) return;
-        try{ var l = JSON.parse(localStorage.getItem(key) || '[]'); if(l.length) legacy = l; }catch(e){}
-      });
-      notesFromLegacy = legacy.length > 0;
-      return legacy;
+  var myRev = null, pendingSave = false, needSync = false;
+  function legacyNotes(){
+    var legacy = [];
+    ['notepad_notes_v3','notepad_notes_v2','notepad_notes_v1'].forEach(function(key){
+      if(legacy.length) return;
+      try{ var l = JSON.parse(localStorage.getItem(key) || '[]'); if(l.length) legacy = l; }catch(e){}
     });
+    notesFromLegacy = legacy.length > 0;
+    return legacy;
   }
+  // Reads the notes + the revision. If the read FAILS (not "empty"), it retries, and if it still fails the app refuses to run,
+  // because continuing with an empty list would overwrite everything that is saved.
+  function loadNotesAsync(){
+    if(!window.indexedDB) return Promise.resolve(legacyNotes());
+    var tries = 0;
+    function attempt(){
+      return Promise.all([IDB.get('notes'), IDB.get('rev')]).then(function(r){
+        myRev = r[1] == null ? null : r[1];
+        return Array.isArray(r[0]) ? r[0] : legacyNotes();
+      }, function(err){
+        var cannotOpen = IDB.unavailable();
+        IDB.reset();
+        if(++tries < 3) return new Promise(function(res){ setTimeout(res, 300*tries); }).then(attempt);
+        if(cannotOpen) return legacyNotes();      // IndexedDB cannot be opened at all on this browser: localStorage mode, as before
+        throw err;
+      });
+    }
+    return attempt();
+  }
+  function storageFatal(kind){
+    stateLoaded = false;                           // from now on nothing is written
+    var el = document.getElementById('storageFatal'); if(!el) return;
+    el.querySelector('h3').textContent = kind === 'conflict' ? 'Notepad changed in another tab' : "Can't open your saved notes";
+    el.querySelector('p').textContent = kind === 'conflict'
+      ? 'Another tab or window saved newer changes. Reload to continue — nothing that was saved has been lost.'
+      : 'Your notes are safe and untouched. Reload to try again — nothing is saved until they load.';
+    el.hidden = false;
+  }
+  document.getElementById('storageReload').addEventListener('click', function(){ location.reload(); });
   function persistNotes(){
     if(!stateLoaded) return;
     if(writing){ writePending = true; return; }
-    writing = true;
-    IDB.set('notes', notes).then(function(){ clearLegacyNotes(); }).catch(function(){
+    writing = true; pendingSave = false;
+    IDB.save(notes, myRev).then(function(nr){
+      myRev = nr; clearLegacyNotes();
+      if(SYNC){ try{ SYNC.postMessage({ rev:nr }); }catch(e){} }
+    }).catch(function(e){
+      if(e && e.conflict){ storageFatal('conflict'); return; }       // somebody else saved first: never overwrite their data
       try{ localStorage.setItem(STORAGE_NOTES, JSON.stringify(notes)); }
-      catch(e){ showToast("Couldn't save — this device's storage is full."); }
+      catch(x){ showToast("Couldn't save — this device's storage is full."); }
     }).then(function(){
       writing = false;
-      if(writePending){ writePending = false; persistNotes(); }
+      if(writePending && stateLoaded){ writePending = false; persistNotes(); }
     });
   }
+  // other tabs/windows of the same app: when one saves, an idle one reloads the data so it is never stale
+  var SYNC = null; try{ if('BroadcastChannel' in window) SYNC = new BroadcastChannel('notepad_sync'); }catch(e){}
+  function syncFromStorage(){
+    if(!stateLoaded) return;
+    if(writing || pendingSave || fwOpen || fwClosing){ needSync = true; return; }
+    needSync = false;
+    Promise.all([IDB.get('notes'), IDB.get('rev')]).then(function(r){
+      var rev = r[1] == null ? null : r[1];
+      if(!Array.isArray(r[0]) || rev === myRev) return;
+      if(writing || pendingSave || fwOpen){ needSync = true; return; }
+      notes = r[0]; myRev = rev; loadState(); renderAll();
+    }).catch(function(){});
+  }
+  if(SYNC) SYNC.onmessage = function(e){ if(e.data && e.data.rev && e.data.rev !== myRev) syncFromStorage(); };
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && needSync) syncFromStorage(); });
   function flushSave(){ clearTimeout(saveTimer); persistNotes(); }
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden') flushSave(); });
   window.addEventListener('pagehide', flushSave);
@@ -3058,6 +3143,7 @@
     openNoteId = null;
     hideSourceCard(null);
     var heavy = fwStructural; fwStructural = false;
+    if(needSync) setTimeout(syncFromStorage, 60);
     var persist = fwPersistAfter; fwPersistAfter = false; fwDirty = false;
     // the heavy work waits until all the motion is over
     setTimeout(function(){ if(persist) persistNotes(); if(heavy) renderAll(); }, 30);
@@ -3735,6 +3821,7 @@
   function touch(note){ note.updatedAt = Date.now(); fwDirty = true; }
   function scheduleSave(immediate){
     var indicator = document.getElementById('saveIndicator');
+    pendingSave = true;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function(){
       persistNotes();
@@ -3969,7 +4056,11 @@
     if(notesFromLegacy) persistNotes();
     updateArrangeBtn();
     renderAll();
-  });
+  }).catch(function(){ storageFatal('read'); });
+  // installable app + offline shell (only caches the app files, never your notes)
+  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+  }
 })();
 </script>
 </body>
